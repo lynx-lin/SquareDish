@@ -30,6 +30,8 @@ git push -u origin main
 3. 打开 <https://github.com/lynx-lin/SquareDish/actions>，等待 `Deploy game to GitHub Pages` 成功。
 4. 打开 <https://lynx-lin.github.io/SquareDish/> 验收。
 
+首次必须由仓库管理员在 Pages 设置里手动开启；工作流的 `GITHUB_TOKEN` 没有首次创建 Pages 站点的权限，所以不能完全自动完成这一步。
+
 首次部署通常需要 1–3 分钟。这段时间访问链接可能返回 404，属于正常现象。
 
 如果先推送、后设置 Pages，第一次工作流可能失败；设置好后在 Actions 页面点击 **Re-run jobs** 即可。
