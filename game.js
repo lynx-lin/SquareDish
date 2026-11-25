@@ -2131,6 +2131,7 @@ const WEAPON_CODEX_TEXT = {
     hpFill: $('hp-fill'),
     hpText: $('hp-text'),
     moveSpeed: $('move-speed'),
+    touchMoveSpeed: $('touch-move-speed'),
     staminaFill: $('stamina-fill'),
     staminaText: $('stamina-text'),
     timer: $('timer'),
@@ -2857,6 +2858,22 @@ const WEAPON_CODEX_TEXT = {
     ui.hud.classList.toggle('touch-mode', TOUCH_DEVICE);
     ui.hud.classList.toggle('stick-left', TOUCH_DEVICE && side === 'left');
     ui.hud.classList.toggle('stick-right', TOUCH_DEVICE && side === 'right');
+    requestAnimationFrame(layoutTouchRelicBar);
+  }
+
+  function layoutTouchRelicBar() {
+    if (!TOUCH_DEVICE || !ui.hud || !ui.relicBar || !ui.weaponBar) return;
+    if (!ui.hud.classList.contains('touch-mode') || ui.hud.classList.contains('hidden')) return;
+    const hudRect = ui.hud.getBoundingClientRect();
+    const weaponRect = ui.weaponBar.getBoundingClientRect();
+    if (weaponRect.width <= 0 || weaponRect.height <= 0) return;
+    ui.relicBar.style.width = `${weaponRect.width}px`;
+    ui.relicBar.style.left = `${weaponRect.left - hudRect.left}px`;
+    ui.relicBar.style.right = 'auto';
+    ui.relicBar.style.top = 'auto';
+    ui.relicBar.style.bottom = `${Math.max(0, hudRect.bottom - weaponRect.top + 8)}px`;
+    const weaponsOnRight = weaponRect.left > hudRect.left + hudRect.width / 2;
+    ui.relicBar.style.justifyContent = weaponsOnRight ? 'flex-end' : 'flex-start';
   }
 
   function renderSaveSlots() {
@@ -3885,6 +3902,7 @@ const WEAPON_CODEX_TEXT = {
     ui.relicBar.innerHTML = selected.map((relic) => (
       `<span class="relic-chip" data-relic-id="${relic.id}">${relic.name}</span>`
     )).join('');
+    layoutTouchRelicBar();
   }
 
   function openRelicSelect() {
@@ -4635,6 +4653,7 @@ const WEAPON_CODEX_TEXT = {
     ui.canvas.height = Math.floor(ui.height * ui.dpr);
     ui.canvas.style.width = `${ui.width}px`;
     ui.canvas.style.height = `${ui.height}px`;
+    layoutTouchRelicBar();
   }
 
   // ============================================================
@@ -5002,6 +5021,7 @@ const WEAPON_CODEX_TEXT = {
     setHidden(ui.runToast, true);
     setHidden(ui.hud, false);
     ui.resultTitle.className = '';
+    layoutTouchRelicBar();
 
     lastFrame = performance.now();
     updateHud();
@@ -13157,6 +13177,9 @@ const WEAPON_CODEX_TEXT = {
       ? 'difficulty-badge'
       : `difficulty-badge ${state.difficulty}`;
     ui.moveSpeed.textContent = `移速 ${(player.displayMoveSpeed || PLAYER.walkSpeed).toFixed(2)} m/s`;
+    if (ui.touchMoveSpeed) {
+      ui.touchMoveSpeed.textContent = ui.moveSpeed.textContent;
+    }
 
     for (let i = 0; i < ui.weaponCards.length; i += 1) {
       const card = ui.weaponCards[i];

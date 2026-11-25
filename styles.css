@@ -135,6 +135,10 @@ button {
   letter-spacing: 0.04em;
 }
 
+.touch-move-speed {
+  display: none;
+}
+
 .hud-top-center {
   position: absolute;
   top: 16px;
@@ -2349,6 +2353,20 @@ body {
   display: none;
 }
 
+#hud.touch-mode .touch-move-speed {
+  display: block;
+  margin-top: 1px;
+  padding: 3px 7px;
+  border: 1px solid rgba(255, 216, 107, 0.22);
+  border-radius: 6px;
+  background: rgba(20, 25, 28, 0.5);
+  color: #ffe08a;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
 #hud.touch-mode .hud-top-center {
   top: calc(4px + env(safe-area-inset-top, 0px));
 }
@@ -2400,17 +2418,25 @@ body {
 }
 
 #hud.touch-mode .relic-bar {
-  top: calc(112px + env(safe-area-inset-top, 0px));
-  left: 50%;
+  top: auto;
+  left: auto;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  width: auto;
+  max-width: none;
+  transform: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  overflow: visible;
+  padding: 0;
+}
+
+#hud.touch-mode.stick-right .relic-bar {
+  left: calc(12px + env(safe-area-inset-left, 0px));
   right: auto;
-  bottom: auto;
-  max-width: 80vw;
-  transform: translateX(-50%);
-  flex-wrap: nowrap;
   justify-content: flex-start;
-  overflow-x: auto;
-  padding: 2px 4px;
-  scrollbar-width: none;
 }
 
 #hud.touch-mode .relic-bar::-webkit-scrollbar {
@@ -2439,6 +2465,18 @@ body {
   #hud.touch-mode .weapon-card {
     width: clamp(104px, 30vw, 126px);
   }
+
+  #hud.touch-mode .relic-bar {
+    bottom: calc(166px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  #hud.touch-mode .relic-chip {
+    text-align: center;
+    white-space: normal;
+  }
 }
 
 @media (orientation: landscape) {
@@ -2449,6 +2487,13 @@ body {
 
   #hud.touch-mode .weapon-card {
     width: clamp(96px, 14vw, 132px);
+  }
+
+  #hud.touch-mode .relic-bar {
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 4px;
   }
 
   #hud.touch-mode .hud-top-left {
@@ -2464,6 +2509,17 @@ body {
 
   #hud.touch-mode .weapon-card {
     width: clamp(96px, 22vw, 118px);
+  }
+
+  #hud.touch-mode .relic-bar {
+    bottom: calc(166px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #hud.touch-mode .relic-chip {
+    text-align: center;
+    white-space: normal;
   }
 }
 
