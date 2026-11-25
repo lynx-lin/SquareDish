@@ -1741,7 +1741,7 @@ const WEAPON_CODEX_TEXT = {
     slime: '死亡后分裂出小史莱姆；难度越高分裂数量越多。',
     slimeSmall: '史莱姆球的分裂产物，不继续分裂。',
     frozen: '远程投掷冰弹；免疫冰系伤害，极难下额外免疫减速。',
-    poison: '远程投掷毒弹；免疫毒系伤害，极难下免疫持续伤害。',
+    poison: '远程投掷毒弹；免疫毒系伤害，极难下免疫所有持续伤害（包括真实持续伤害）。',
     ghost: '非真实伤害减半；不触发陷阱，但会受到陷阱爆炸等非接触效果。',
     shieldDog: '护盾使单次受到的伤害有上限，熟练的无视减伤可以绕过。',
     shieldSheep: '固定减伤较高，适合用真实伤害或无视减伤处理。',
@@ -1768,7 +1768,7 @@ const WEAPON_CODEX_TEXT = {
     perfectOrb: '精英；免疫爆炸和减速，从静止开始加速并惯性追踪玩家，速度越高伤害越高。',
     lostTreasure: '免疫能量且受到其他伤害大幅提高；每2秒朝玩家冲刺一次，死亡时治疗玩家并提供10点人物经验。',
     gluttonWorm: '精英；六节共用生命，接触玩家会施加黑暗和减速；尾部伤害转给头部。',
-    geneBoss: 'BOSS；周期记录并免疫最近受到的伤害类型，交替使用领域、精神箭和精神混乱。'
+    geneBoss: 'BOSS；每6秒记录下一次受到的基础属性伤害（物理/毒/冰/能量）并免疫该属性，不记录爆炸、尖刺、持续、真实等附加词条；交替使用领域、精神箭和精神混乱。'
   };
 // 战利品价格设置、背包道具
   const LOOT_ITEMS = {
@@ -2334,13 +2334,24 @@ const WEAPON_CODEX_TEXT = {
     return String(Math.round(value * 10) / 10);
   }
 
+  const BASE_DAMAGE_TYPES = ['physical', 'ice', 'poison', 'energy'];
+  const DAMAGE_TYPE_LABELS = {
+    physical: '物理',
+    ice: '冰系',
+    poison: '毒系',
+    energy: '能量',
+    true: '真实',
+    spike: '尖刺',
+    explosion: '爆炸',
+    dot: '持续'
+  };
+
   function elementLabel(type) {
-    return {
-      physical: '物理',
-      ice: '冰系',
-      poison: '毒系',
-      energy: '能量'
-    }[type] || type;
+    return DAMAGE_TYPE_LABELS[type] || type;
+  }
+
+  function isBaseDamageType(type) {
+    return BASE_DAMAGE_TYPES.includes(type);
   }
 
   function randomInt(min, max) {
@@ -7667,7 +7678,7 @@ const WEAPON_CODEX_TEXT = {
       if (dist2(cart.x, cart.y, enemy.x, enemy.y) > (enemy.r + 0.5) ** 2) continue;
       cart.hitIds.add(enemy.id);
       damageEnemy(enemy, weapon.level >= 2 ? 36 : 30, 'energy', false, 'flameCart');
-      if (!enemy.dead) {
+      if (!enemy.dead && !enemy.immuneDot) {
         enemy.burn = {
           ticks: 3,
           timer: 1,
@@ -7905,7 +7916,7 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function curseEnemy(enemy, weapon) {
-    if (!enemy || enemy.dead) return;
+    if (!enemy || enemy.dead || enemy.immuneDot) return;
     enemy.curse = {
       timer: 1,
       bonus: weapon.level >= 2 ? 6 : 0,
@@ -7921,7 +7932,7 @@ const WEAPON_CODEX_TEXT = {
     if (weapon.timer > 0) return;
     const player = state.player;
     const candidates = state.enemies.filter((enemy) => (
-      isEnemyTargetable(enemy) && !enemy.curse &&
+      isEnemyTargetable(enemy) && !enemy.immuneDot && !enemy.curse &&
       dist2(player.x, player.y, enemy.x, enemy.y) <= 25
     ));
     if (candidates.length === 0) {
@@ -8054,7 +8065,7 @@ const WEAPON_CODEX_TEXT = {
     const conversion = player ? player.damageConversion : null;
     const effectiveType = conversion && type === 'physical' ? conversion : type;
 
-    if (effectiveType === 'poison' && (enemy.immunePoison || enemy.immuneDot)) return 0;
+    if (effectiveType === 'poison' && enemy.immunePoison) return 0;
     if (effectiveType === 'ice' && enemy.immuneIce) return 0;
     if (effectiveType === 'physical' && enemy.immunePhysical) return 0;
     if (effectiveType === 'energy' && enemy.immuneEnergy) return 0;
@@ -12008,7 +12019,7 @@ const WEAPON_CODEX_TEXT = {
       damage *= 1.2;
     }
 
-    if (effectiveType === 'poison' && (enemy.immunePoison || enemy.immuneDot)) {
+    if (effectiveType === 'poison' && enemy.immunePoison) {
       damage = 0;
     }
     if (effectiveType === 'ice' && enemy.immuneIce) {
@@ -12020,15 +12031,21 @@ const WEAPON_CODEX_TEXT = {
     if (effectiveType === 'energy' && enemy.immuneEnergy) {
       damage = 0;
     }
+    // “持续”是独立伤害类型：极难毒尸会拦截所有带 dot 词条的伤害实例，包括真实伤害。
+    if (options.dot && enemy.immuneDot) {
+      damage = 0;
+    }
     if (options.explosion && enemy.immuneExplosion) {
       damage = 0;
     }
     if (options.spike && enemy.immuneSpike) {
       damage = 0;
     }
+    // 幻造基因只记录/免疫基础属性，爆炸、尖刺、持续、真实属于附加词条。
     if (
       enemy.type === 'geneBoss' &&
       enemy.geneImmunityTimer > 0 &&
+      isBaseDamageType(effectiveType) &&
       enemy.geneImmuneType === effectiveType
     ) {
       damage = 0;
@@ -12128,7 +12145,7 @@ const WEAPON_CODEX_TEXT = {
     if (
       enemy.type === 'geneBoss' &&
       enemy.geneWindowActive &&
-      ['physical', 'ice', 'poison', 'energy'].includes(effectiveType)
+      isBaseDamageType(effectiveType)
     ) {
       enemy.geneWindowActive = false;
       enemy.geneWindowTimer = 0;
