@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="color-scheme" content="dark">
   <title>方形皿·测试版</title>
   <link rel="icon" href="data:,">
@@ -48,6 +48,13 @@
 
     <div id="weapon-bar" class="weapon-bar"></div>
     <div id="relic-bar" class="relic-bar"></div>
+    <div id="touch-controls" class="touch-controls">
+      <div id="joystick" class="joystick" aria-label="移动摇杆">
+        <div class="joystick-base"></div>
+        <div id="joystick-knob" class="joystick-knob"></div>
+      </div>
+      <button id="touch-pause" class="touch-pause" type="button" aria-label="暂停">Ⅱ</button>
+    </div>
 
     <div id="hud-hint" class="hud-hint">W/A/S/D 移动 · Shift 奔跑 · 1/2/3 主动 · Esc 暂停</div>
     <div id="run-toast" class="run-toast hidden" aria-live="polite"></div>
@@ -202,6 +209,12 @@
             <strong id="volume-value">70%</strong>
           </label>
           <p class="help-note">音量设置会保存，但当前版本还没有音频资源。</p>
+        </section>
+
+        <section class="settings-section">
+          <h3>触屏</h3>
+          <div id="touch-side-picker" class="touch-side-picker"></div>
+          <p class="help-note">摇杆在左时武器 HUD 在右；在右时武器 HUD 在左。竖屏武器卡竖排，横屏横排。</p>
         </section>
 
         <section class="settings-section">

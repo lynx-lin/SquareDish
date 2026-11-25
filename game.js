@@ -2022,6 +2022,7 @@ const WEAPON_CODEX_TEXT = {
     background: 'none',
     brightness: 100,
     volume: 70,
+    joystickSide: 'left',
     keys: { ...DEFAULT_KEYBINDS }
   };
   const BACKGROUND_OPTIONS = [
@@ -2029,6 +2030,10 @@ const WEAPON_CODEX_TEXT = {
     { id: 'desert', name: '沙漠', desc: '浅黄沙地' },
     { id: 'industrial', name: '工厂', desc: '灰色网格' },
     { id: 'grass', name: '草原', desc: '浅绿草地' }
+  ];
+  const TOUCH_SIDE_OPTIONS = [
+    { id: 'left', name: '摇杆在左', desc: '武器 HUD 在右' },
+    { id: 'right', name: '摇杆在右', desc: '武器 HUD 在左' }
   ];
   const KEY_ACTION_LABELS = {
     up: '上',
@@ -2047,6 +2052,8 @@ const WEAPON_CODEX_TEXT = {
   const QUERY = new URLSearchParams(window.location.search);
   const DEBUG = QUERY.has('debug');
   const AUTOSTART = QUERY.has('autostart');
+  const TOUCH_DEVICE = window.matchMedia('(pointer: coarse)').matches
+    || (navigator.maxTouchPoints || 0) > 0;
   const QUERY_DIFFICULTY = QUERY.get('difficulty');
   const INITIAL_DIFFICULTY = DIFFICULTY_ORDER.includes(QUERY_DIFFICULTY)
     ? QUERY_DIFFICULTY
@@ -2116,6 +2123,10 @@ const WEAPON_CODEX_TEXT = {
     weaponBar: $('weapon-bar'),
     relicBar: $('relic-bar'),
     hudHint: $('hud-hint'),
+    joystick: $('joystick'),
+    joystickKnob: $('joystick-knob'),
+    touchPause: $('touch-pause'),
+    touchSidePicker: $('touch-side-picker'),
     hpFill: $('hp-fill'),
     hpText: $('hp-text'),
     moveSpeed: $('move-speed'),
@@ -2237,7 +2248,17 @@ const WEAPON_CODEX_TEXT = {
     bossSpawned: false,
     invincible: false,
     keys: new Set(),
-    input: { up: false, down: false, left: false, right: false, run: false },
+    input: {
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+      run: false,
+      stickActive: false,
+      stickX: 0,
+      stickY: 0,
+      stickMagnitude: 0
+    },
     acc: 0,
     fps: 60,
     fpsFrames: 0,
@@ -2273,6 +2294,8 @@ const WEAPON_CODEX_TEXT = {
   let codexReturnToPause = false;
   let shopTab = 'weapons';
   let menuDemo = null;
+  let joystickPointerId = null;
+  const touchWeaponPointers = new Map();
 
   const MENU_DEMO_ZOOM = 1.65;
   const MENU_DEMO_RESET_TIME = 38;
@@ -2393,6 +2416,8 @@ const WEAPON_CODEX_TEXT = {
     buildWeaponCards();
 
     bindEvents();
+    initTouchControls();
+    applyTouchLayout();
     refreshControlHint();
     refreshStartButton();
     maybeOpenStarterSelection();
@@ -2518,6 +2543,9 @@ const WEAPON_CODEX_TEXT = {
     };
     if (!BACKGROUND_OPTIONS.some((option) => option.id === profile.settings.background)) {
       profile.settings.background = 'none';
+    }
+    if (!TOUCH_SIDE_OPTIONS.some((option) => option.id === profile.settings.joystickSide)) {
+      profile.settings.joystickSide = 'left';
     }
     profile.settings.brightness = clamp(Number(profile.settings.brightness) || 100, 60, 140);
     profile.settings.volume = clamp(Number(profile.settings.volume) || 0, 0, 100);
@@ -2801,6 +2829,34 @@ const WEAPON_CODEX_TEXT = {
     });
   }
 
+  function renderTouchSidePicker() {
+    if (!ui.touchSidePicker) return;
+    ui.touchSidePicker.innerHTML = TOUCH_SIDE_OPTIONS.map((option) => `
+      <button type="button" class="background-option${state.settings.joystickSide === option.id ? ' is-active' : ''}" data-touch-side="${option.id}">
+        <strong>${option.name}</strong>
+        <small>${option.desc}</small>
+      </button>
+    `).join('');
+    ui.touchSidePicker.querySelectorAll('.background-option').forEach((button) => {
+      button.addEventListener('click', () => {
+        state.settings.joystickSide = button.dataset.touchSide === 'right' ? 'right' : 'left';
+        applyTouchLayout();
+        resetJoystick();
+        saveActiveSlot();
+        renderTouchSidePicker();
+      });
+    });
+  }
+
+  function applyTouchLayout() {
+    if (!ui.hud) return;
+    const side = state.settings.joystickSide === 'right' ? 'right' : 'left';
+    document.body.classList.toggle('touch-device', TOUCH_DEVICE);
+    ui.hud.classList.toggle('touch-mode', TOUCH_DEVICE);
+    ui.hud.classList.toggle('stick-left', TOUCH_DEVICE && side === 'left');
+    ui.hud.classList.toggle('stick-right', TOUCH_DEVICE && side === 'right');
+  }
+
   function renderSaveSlots() {
     if (!ui.saveSlotList || !saveData) return;
     ui.saveSlotList.innerHTML = saveData.slots.map((profile, index) => {
@@ -2867,8 +2923,10 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function refreshSettingsUi() {
+    applyTouchLayout();
     renderKeybinds();
     renderBackgroundPicker();
+    renderTouchSidePicker();
     renderSaveSlots();
     if (ui.brightnessSlider) {
       ui.brightnessSlider.value = String(state.settings.brightness);
@@ -4158,11 +4216,53 @@ const WEAPON_CODEX_TEXT = {
     refreshMenuProgress();
   }
 
+  function bindTouchWeaponCard(card, index) {
+    if (!TOUCH_DEVICE) return;
+    card.classList.add('touch-weapon-card');
+    card.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' || state.mode !== 'playing') return;
+      const player = state.player;
+      const weapon = player && player.weapons[index];
+      if (!weapon || !weapon.activeUnlocked) return;
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        card.setPointerCapture(event.pointerId);
+      } catch {
+        // 某些浏览器不支持在此元素上捕获指针。
+      }
+      touchWeaponPointers.set(event.pointerId, { card, index });
+      card.classList.add('is-pressed');
+      activateWeapon(index);
+    });
+
+    const releaseCard = (event) => {
+      const pressed = touchWeaponPointers.get(event.pointerId);
+      if (!pressed || pressed.index !== index) return;
+      event.preventDefault();
+      touchWeaponPointers.delete(event.pointerId);
+      card.classList.remove('is-pressed');
+      const player = state.player;
+      if (player && player.heldWeaponIndex === index) {
+        releaseHeldWeapon(index);
+      }
+    };
+
+    card.addEventListener('pointerup', releaseCard);
+    card.addEventListener('pointercancel', releaseCard);
+    card.addEventListener('lostpointercapture', releaseCard);
+    card.addEventListener('contextmenu', (event) => event.preventDefault());
+  }
+
   function buildWeaponCards() {
     ui.weaponBar.innerHTML = '';
     ui.weaponCards = getSelectedWeapons().map((weapon, index) => {
       const card = document.createElement('div');
       card.className = 'weapon-card';
+      card.dataset.weaponIndex = String(index);
+      if ((weapon.activeUnlockLevel || 0) > getWeaponLevel(weapon.id)) {
+        card.classList.add('no-active');
+      }
       card.innerHTML = `
         <div class="weapon-head">
           <span class="weapon-key">${index + 1}</span>
@@ -4175,6 +4275,7 @@ const WEAPON_CODEX_TEXT = {
         <div class="weapon-proficiency">熟练 0/1200</div>
       `;
       ui.weaponBar.appendChild(card);
+      bindTouchWeaponCard(card, index);
       return {
         root: card,
         fill: card.querySelector('.cd-fill'),
@@ -4486,14 +4587,20 @@ const WEAPON_CODEX_TEXT = {
     window.addEventListener('keydown', onKeyDown, { passive: false });
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('blur', () => {
-      state.keys.clear();
-      updateInputFromKeys();
+      resetInput();
       if (state.mode === 'playing') pauseGame();
     });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && state.mode === 'playing') pauseGame();
     });
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => {
+      resetJoystick();
+      window.setTimeout(resizeCanvas, 80);
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', resizeCanvas);
+    }
   }
 
   function resizeCanvas() {
@@ -4526,6 +4633,8 @@ const WEAPON_CODEX_TEXT = {
   function resetInput() {
     state.keys.clear();
     updateInputFromKeys();
+    resetJoystick();
+    clearTouchWeaponPresses();
     const player = state.player;
     if (player) {
       player.heldWeaponIndex = -1;
@@ -4536,6 +4645,94 @@ const WEAPON_CODEX_TEXT = {
         }
       }
     }
+  }
+
+  function clearTouchWeaponPresses() {
+    for (const { card } of touchWeaponPointers.values()) {
+      card.classList.remove('is-pressed');
+    }
+    touchWeaponPointers.clear();
+  }
+
+  function resetJoystick() {
+    joystickPointerId = null;
+    state.input.stickActive = false;
+    state.input.stickX = 0;
+    state.input.stickY = 0;
+    state.input.stickMagnitude = 0;
+    if (ui.joystick) ui.joystick.classList.remove('is-active');
+    if (ui.joystickKnob) {
+      ui.joystickKnob.style.transform = 'translate(-50%, -50%)';
+    }
+  }
+
+  function updateJoystickFromPointer(event) {
+    const joystick = ui.joystick;
+    if (!joystick) return;
+    const rect = joystick.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const maxDistance = rect.width * 0.32;
+    let dx = event.clientX - centerX;
+    let dy = event.clientY - centerY;
+    const distance = Math.hypot(dx, dy);
+    if (distance > maxDistance) {
+      dx = (dx / distance) * maxDistance;
+      dy = (dy / distance) * maxDistance;
+    }
+    const magnitude = Math.min(1, Math.hypot(dx, dy) / maxDistance);
+    state.input.stickX = maxDistance > 0 ? dx / maxDistance : 0;
+    state.input.stickY = maxDistance > 0 ? dy / maxDistance : 0;
+    state.input.stickMagnitude = magnitude;
+    state.input.stickActive = magnitude > 0.12;
+    if (ui.joystickKnob) {
+      ui.joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    }
+  }
+
+  function initTouchControls() {
+    if (!TOUCH_DEVICE || !ui.joystick) return;
+    const joystick = ui.joystick;
+    joystick.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' || state.mode !== 'playing') return;
+      if (joystickPointerId !== null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      joystickPointerId = event.pointerId;
+      joystick.classList.add('is-active');
+      try {
+        joystick.setPointerCapture(event.pointerId);
+      } catch {
+        // 某些浏览器不支持在此元素上捕获指针。
+      }
+      updateJoystickFromPointer(event);
+    });
+    joystick.addEventListener('pointermove', (event) => {
+      if (event.pointerId !== joystickPointerId) return;
+      event.preventDefault();
+      updateJoystickFromPointer(event);
+    });
+    const releaseJoystick = (event) => {
+      if (event.pointerId !== joystickPointerId) return;
+      event.preventDefault();
+      resetJoystick();
+    };
+    joystick.addEventListener('pointerup', releaseJoystick);
+    joystick.addEventListener('pointercancel', releaseJoystick);
+    joystick.addEventListener('lostpointercapture', releaseJoystick);
+    joystick.addEventListener('contextmenu', (event) => event.preventDefault());
+
+    if (ui.touchPause) {
+      ui.touchPause.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (state.mode === 'playing') pauseGame();
+      });
+    }
+
+    document.addEventListener('contextmenu', (event) => {
+      if (TOUCH_DEVICE && state.mode === 'playing') event.preventDefault();
+    });
   }
 
   function onKeyDown(event) {
@@ -4847,8 +5044,7 @@ const WEAPON_CODEX_TEXT = {
     state.noticeTimer = 0;
     state.noticeQueue = [];
     state.runRelicUnlocks = [];
-    state.keys.clear();
-    updateInputFromKeys();
+    resetInput();
     renderMenuLoadout();
     renderMenuRelics();
 
@@ -5438,14 +5634,21 @@ const WEAPON_CODEX_TEXT = {
 
     let moveX = (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
     let moveY = (state.input.down ? 1 : 0) - (state.input.up ? 1 : 0);
+    let moveIntensity = 1;
+    const stickActive = state.input.stickActive && state.input.stickMagnitude > 0.12;
+    if (stickActive) {
+      moveX = state.input.stickX;
+      moveY = state.input.stickY;
+      moveIntensity = clamp(state.input.stickMagnitude, 0, 1);
+    }
     if (player.confusionTimer > 0) {
       moveX = -moveX;
       moveY = -moveY;
     }
-    const moving = moveX !== 0 || moveY !== 0;
+    const moving = stickActive ? moveIntensity > 0.12 : moveX !== 0 || moveY !== 0;
 
     if (moving) {
-      const length = Math.hypot(moveX, moveY);
+      const length = Math.hypot(moveX, moveY) || 1;
       moveX /= length;
       moveY /= length;
       player.facing.x = moveX;
@@ -5478,7 +5681,9 @@ const WEAPON_CODEX_TEXT = {
     }
     player.undergroundSlowFactor = undergroundSlow;
 
-    const running = moving && state.input.run && player.stamina > 0;
+    const running = moving
+      && (state.input.run || (stickActive && moveIntensity > 0.82))
+      && player.stamina > 0;
     const baseSpeed = running
       ? player.runSpeed
       : PLAYER.walkSpeed + player.goldenShellStacks * 0.01;
@@ -5499,11 +5704,12 @@ const WEAPON_CODEX_TEXT = {
       * (player.waterShurikenSpeedTimer > 0 ? 2 : 1)
       * (player.vineRockTimer > 0 && !running ? 1.5 : 1);
 
-    player.currentMoveSpeed = moving ? speed : 0;
+    player.currentMoveSpeed = moving ? speed * moveIntensity : 0;
     player.displayMoveSpeed = speed;
     if (moving) {
-      player.x = clamp(player.x + moveX * speed * dt, PLAYER.radius, WORLD.w - PLAYER.radius);
-      player.y = clamp(player.y + moveY * speed * dt, PLAYER.radius, WORLD.h - PLAYER.radius);
+      const step = speed * moveIntensity * dt;
+      player.x = clamp(player.x + moveX * step, PLAYER.radius, WORLD.w - PLAYER.radius);
+      player.y = clamp(player.y + moveY * step, PLAYER.radius, WORLD.h - PLAYER.radius);
     }
 
     if (running) {
@@ -6412,7 +6618,11 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function isMovingInput() {
-    return state.input.up || state.input.down || state.input.left || state.input.right;
+    return state.input.up
+      || state.input.down
+      || state.input.left
+      || state.input.right
+      || (state.input.stickActive && state.input.stickMagnitude > 0.12);
   }
 
   function showChannelInterrupted() {
@@ -12677,7 +12887,11 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function getViewScale() {
-    return SCALE * (menuDemo ? MENU_DEMO_ZOOM : 1);
+    if (menuDemo) return SCALE * MENU_DEMO_ZOOM;
+    if (TOUCH_DEVICE) {
+      return Math.min(SCALE, ui.width / 18, ui.height / 13);
+    }
+    return SCALE;
   }
 
   function updateCamera() {
@@ -13605,7 +13819,7 @@ const WEAPON_CODEX_TEXT = {
     }
 
     ctx.strokeStyle = 'rgba(118, 164, 255, 0.4)';
-    ctx.lineWidth = 1 / SCALE;
+    ctx.lineWidth = 1 / getViewScale();
     for (let x = left; x <= right; x += 2) {
       ctx.beginPath();
       ctx.moveTo(x, top);

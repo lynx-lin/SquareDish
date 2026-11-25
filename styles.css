@@ -2097,3 +2097,319 @@ kbd {
     grid-template-columns: 1fr;
   }
 }
+
+html,
+body {
+  overscroll-behavior: none;
+}
+
+#game {
+  touch-action: none;
+}
+
+/* ---------- Touch controls ---------- */
+
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  pointer-events: none;
+}
+
+.touch-device #hud.touch-mode .touch-controls {
+  display: block;
+}
+
+#hud.touch-mode .hud-hint {
+  display: none;
+}
+
+#hud.touch-mode .weapon-bar {
+  z-index: 6;
+  left: auto;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#hud.touch-mode.stick-right .weapon-bar {
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  right: auto;
+}
+
+#hud.touch-mode .weapon-card {
+  width: clamp(104px, 30vw, 126px);
+  min-height: 44px;
+  padding: 7px 9px;
+  border-radius: 11px;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  transition: transform 80ms ease, border-color 80ms ease, opacity 80ms ease;
+}
+
+#hud.touch-mode .weapon-card.is-pressed {
+  transform: scale(0.97);
+  border-color: rgba(123, 213, 255, 0.78);
+}
+
+#hud.touch-mode .weapon-card.no-active {
+  opacity: 0.48;
+}
+
+#hud.touch-mode .weapon-head {
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+#hud.touch-mode .weapon-key,
+#hud.touch-mode .weapon-level {
+  display: none;
+}
+
+#hud.touch-mode .weapon-name {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.15;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+#hud.touch-mode .weapon-state {
+  max-width: 48%;
+  overflow: hidden;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#hud.touch-mode .weapon-damage,
+#hud.touch-mode .weapon-proficiency {
+  display: none;
+}
+
+#hud.touch-mode .cd-track {
+  height: 3px;
+}
+
+#hud.touch-mode .joystick {
+  position: absolute;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: calc(14px + env(safe-area-inset-left, 0px));
+  width: clamp(104px, 28vw, 132px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(123, 213, 255, 0.26);
+  background: radial-gradient(circle at 50% 46%, rgba(24, 50, 78, 0.42), rgba(4, 10, 20, 0.34) 68%);
+  box-shadow: inset 0 0 24px rgba(123, 213, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+#hud.touch-mode.stick-right .joystick {
+  left: auto;
+  right: calc(14px + env(safe-area-inset-right, 0px));
+}
+
+.joystick-base {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1px dashed rgba(123, 213, 255, 0.18);
+}
+
+.joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(190, 235, 255, 0.65);
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 35%, rgba(216, 246, 255, 0.7), rgba(72, 155, 205, 0.5) 58%, rgba(23, 63, 99, 0.74));
+  box-shadow: 0 0 18px rgba(123, 213, 255, 0.22);
+  pointer-events: none;
+}
+
+#hud.touch-mode .joystick.is-active {
+  border-color: rgba(123, 213, 255, 0.58);
+}
+
+.touch-pause {
+  position: absolute;
+  left: 50%;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transform: translateX(-50%);
+  border: 1px solid rgba(140, 178, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(8, 16, 30, 0.62);
+  color: #d8f1ff;
+  font-size: 15px;
+  line-height: 1;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#hud.touch-mode .hud-top-left {
+  top: calc(38px + env(safe-area-inset-top, 0px));
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  width: min(36vw, 230px);
+  min-width: 0;
+  gap: 3px;
+}
+
+#hud.touch-mode .bar-row {
+  grid-template-columns: 26px minmax(58px, 1fr) 38px;
+  gap: 4px;
+  font-size: 9px;
+}
+
+#hud.touch-mode .bar {
+  height: 9px;
+}
+
+#hud.touch-mode .move-speed,
+#hud.touch-mode .timer-caption {
+  display: none;
+}
+
+#hud.touch-mode .hud-top-center {
+  top: calc(4px + env(safe-area-inset-top, 0px));
+}
+
+#hud.touch-mode .timer {
+  font-size: 24px;
+}
+
+#hud.touch-mode .boss-bar {
+  width: min(58vw, 320px);
+  max-width: 58vw;
+  margin-top: 40px;
+}
+
+#hud.touch-mode .boss-name {
+  font-size: 9px;
+}
+
+#hud.touch-mode .ruin-status {
+  position: absolute;
+  top: calc(140px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  margin: 0;
+  padding: 3px 8px;
+  transform: translateX(-50%);
+  font-size: 9px;
+}
+
+#hud.touch-mode .hud-top-right {
+  top: calc(4px + env(safe-area-inset-top, 0px));
+  right: calc(8px + env(safe-area-inset-right, 0px));
+  gap: 2px;
+}
+
+#hud.touch-mode .hud-top-right .hud-exp-track,
+#hud.touch-mode .hud-top-right .exp-text,
+#hud.touch-mode .hud-top-right .kills,
+#hud.touch-mode .hud-top-right .damage-total {
+  display: none;
+}
+
+#hud.touch-mode .player-level {
+  font-size: 10px;
+}
+
+#hud.touch-mode .difficulty-badge {
+  font-size: 9px;
+  padding: 3px 7px;
+}
+
+#hud.touch-mode .relic-bar {
+  top: calc(112px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  max-width: 80vw;
+  transform: translateX(-50%);
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 2px 4px;
+  scrollbar-width: none;
+}
+
+#hud.touch-mode .relic-bar::-webkit-scrollbar {
+  display: none;
+}
+
+#hud.touch-mode .relic-chip {
+  padding: 5px 8px;
+  font-size: 9px;
+  flex: 0 0 auto;
+}
+
+.touch-side-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+@media (orientation: portrait) {
+  #hud.touch-mode .weapon-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #hud.touch-mode .weapon-card {
+    width: clamp(104px, 30vw, 126px);
+  }
+}
+
+@media (orientation: landscape) {
+  #hud.touch-mode .weapon-bar {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  #hud.touch-mode .weapon-card {
+    width: clamp(96px, 14vw, 132px);
+  }
+
+  #hud.touch-mode .hud-top-left {
+    top: calc(34px + env(safe-area-inset-top, 0px));
+  }
+}
+
+@media (orientation: landscape) and (max-width: 650px) {
+  #hud.touch-mode .weapon-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #hud.touch-mode .weapon-card {
+    width: clamp(96px, 22vw, 118px);
+  }
+}
+
+@media (pointer: coarse) {
+  .touch-side-picker .background-option {
+    min-height: 48px;
+  }
+}
