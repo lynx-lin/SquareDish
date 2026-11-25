@@ -28,8 +28,8 @@ jobs:
           cp index.html styles.css game.js _site/
           if [ -d asset ]; then cp -R asset _site/; fi
           touch _site/.nojekyll
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
