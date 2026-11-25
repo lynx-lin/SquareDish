@@ -2035,6 +2035,7 @@ const WEAPON_CODEX_TEXT = {
     { id: 'left', name: '摇杆在左', desc: '武器 HUD 在右' },
     { id: 'right', name: '摇杆在右', desc: '武器 HUD 在左' }
   ];
+  const CANDY_COLORS = ['#b8b8c8', '#7ee08a', '#6fb7ff', '#ff6b6b', '#ff9ad5'];
   const KEY_ACTION_LABELS = {
     up: '上',
     down: '下',
@@ -2292,6 +2293,7 @@ const WEAPON_CODEX_TEXT = {
   let relicDraft = [];
   let codexTab = 'weapons';
   let codexReturnToPause = false;
+  const expandedCodexWeapons = new Set();
   let shopTab = 'weapons';
   let menuDemo = null;
   let joystickPointerId = null;
@@ -3490,17 +3492,23 @@ const WEAPON_CODEX_TEXT = {
       const value = codexText(text.levels[level - 1]);
       return value ? `<div class="codex-detail"><b>熟练${level}级：</b>${value}</div>` : '';
     }).join('');
+    const expanded = expandedCodexWeapons.has(weapon.id);
     return `
-      <article class="codex-card">
-        <div class="codex-card-head"><strong>${weapon.name}</strong><span class="codex-id">${weapon.id}</span></div>
+      <article class="codex-card codex-weapon-card${expanded ? ' is-expanded' : ''}" data-codex-weapon="${weapon.id}">
+        <button class="codex-toggle" type="button" aria-expanded="${expanded}">
+          <span class="codex-card-head"><strong>${weapon.name}</strong><span class="codex-id">${weapon.id}</span></span>
+          <span class="codex-toggle-icon" aria-hidden="true">${expanded ? '▾' : '▸'}</span>
+        </button>
         <div class="codex-tags">${tags}</div>
-        <div class="codex-meta"><b>可造成伤害类型：</b>${meta.damage.join(' / ')}</div>
-        <div class="codex-meta">冷却 ${weapon.cooldown}s · ${active}</div>
-        <p class="codex-brief"><b>粗略描述：</b>${codexText(weapon.desc)}</p>
-        <div class="codex-detail"><b>被动效果：</b>${codexText(text.passive) || '无。'}</div>
-        <div class="codex-detail"><b>自动攻击：</b>${codexText(text.auto) || '无。'}</div>
-        ${showActive ? `<div class="codex-detail"><b>主动释放：</b>${activeText}</div>` : ''}
-        ${levels}
+        <div class="codex-weapon-details">
+          <div class="codex-meta"><b>可造成伤害类型：</b>${meta.damage.join(' / ')}</div>
+          <div class="codex-meta">冷却 ${weapon.cooldown}s · ${active}</div>
+          <p class="codex-brief"><b>粗略描述：</b>${codexText(weapon.desc)}</p>
+          <div class="codex-detail"><b>被动效果：</b>${codexText(text.passive) || '无。'}</div>
+          <div class="codex-detail"><b>自动攻击：</b>${codexText(text.auto) || '无。'}</div>
+          ${showActive ? `<div class="codex-detail"><b>主动释放：</b>${activeText}</div>` : ''}
+          ${levels}
+        </div>
       </article>
     `;
   }
@@ -3606,6 +3614,21 @@ const WEAPON_CODEX_TEXT = {
     });
     if (codexTab === 'weapons') {
       ui.codexContent.innerHTML = `<div class="codex-grid">${WEAPONS.map(codexWeaponCard).join('')}</div>`;
+      ui.codexContent.querySelectorAll('.codex-weapon-card').forEach((card) => {
+        const toggle = card.querySelector('.codex-toggle');
+        if (!toggle) return;
+        toggle.addEventListener('click', (event) => {
+          event.preventDefault();
+          const id = card.dataset.codexWeapon;
+          const willExpand = !expandedCodexWeapons.has(id);
+          if (willExpand) expandedCodexWeapons.add(id);
+          else expandedCodexWeapons.delete(id);
+          card.classList.toggle('is-expanded', willExpand);
+          toggle.setAttribute('aria-expanded', String(willExpand));
+          const icon = toggle.querySelector('.codex-toggle-icon');
+          if (icon) icon.textContent = willExpand ? '▾' : '▸';
+        });
+      });
     } else if (codexTab === 'relics') {
       ui.codexContent.innerHTML = `<p class="codex-meta">圣物掉率在困难/极难难度分别 ×1.5/×2；已解锁圣物不会再次掉落，获得时只解锁、不装备。</p><div class="codex-grid">${RELICS.map(codexRelicCard).join('')}</div>`;
     } else {
@@ -3619,6 +3642,7 @@ const WEAPON_CODEX_TEXT = {
 
   function showCodex(tab = 'weapons') {
     codexTab = tab;
+    expandedCodexWeapons.clear();
     codexReturnToPause = state.mode === 'paused';
     renderCodex();
     if (codexReturnToPause) setHidden(ui.pause, true);
@@ -6736,6 +6760,7 @@ const WEAPON_CODEX_TEXT = {
     weapon.targetId = target ? target.id : null;
     weapon.stacks = 0;
     weapon.timer = weapon.level >= 2 ? 0.4 : 0.5;
+    weapon.fishSide = Math.random() < 0.5 ? 'left' : 'right';
     if (target) applyEnemySlow(target, weapon.level >= 3 ? 0.65 : 0.75, 0.2);
   }
 
@@ -7845,7 +7870,9 @@ const WEAPON_CODEX_TEXT = {
     enemy.curse = {
       timer: 1,
       bonus: weapon.level >= 2 ? 6 : 0,
-      level: weapon.level
+      level: weapon.level,
+      sigilTimer: 1,
+      hitTimer: 0
     };
   }
 
@@ -7948,6 +7975,7 @@ const WEAPON_CODEX_TEXT = {
         landed: false,
         life: 5,
         damage: weapon.level >= 3 ? 13 + Math.random() * 2 : 11 + Math.random() * 2,
+        color: CANDY_COLORS[Math.floor(Math.random() * CANDY_COLORS.length)],
         level: weapon.level,
         dead: false
       });
@@ -8006,6 +8034,17 @@ const WEAPON_CODEX_TEXT = {
     }
   }
 
+  function grantDeathKnifeKill(weapon, target) {
+    if (!weapon || !target || !target.dead) return;
+    const player = state.player;
+    weapon.deathValue = Math.min(200, weapon.deathValue + 60);
+    if (player) player.hp = Math.min(player.maxHp, player.hp + 1);
+    if (weapon.level >= 3 && target.isElite) {
+      weapon.deathValue = Math.min(200, weapon.deathValue + 40);
+      if (player) player.hp = Math.min(player.maxHp, player.hp + 2);
+    }
+  }
+
   function fireDeathKnife(weapon) {
     const player = state.player;
     if (weapon.deathValue < 80) return;
@@ -8017,15 +8056,35 @@ const WEAPON_CODEX_TEXT = {
     weapon.deathValue = 0;
     weapon.deathAmp = false;
     player.deathSpeedBonus = 0;
-    damageEnemy(target, damage, 'energy', false, 'deathKnife');
 
-    if (target.dead) {
-      weapon.deathValue = Math.min(200, weapon.deathValue + 60);
-      player.hp = Math.min(player.maxHp, player.hp + 1);
-      if (weapon.level >= 3 && target.isElite) {
-        weapon.deathValue = Math.min(200, weapon.deathValue + 40);
-        player.hp = Math.min(player.maxHp, player.hp + 2);
+    const canExecute = damage >= target.hp && !target.immuneEnergy && !target.deathKnifeExecution;
+    if (canExecute) {
+      target.deathKnifeExecution = {
+        timer: 0.2,
+        duration: 0.2,
+        damage,
+        weapon
+      };
+      return;
+    }
+
+    damageEnemy(target, damage, 'energy', false, 'deathKnife');
+    grantDeathKnifeKill(weapon, target);
+  }
+
+  function updateDeathKnifeExecutions(dt) {
+    for (const enemy of state.enemies) {
+      const execution = enemy.deathKnifeExecution;
+      if (!execution) continue;
+      if (enemy.dead) {
+        delete enemy.deathKnifeExecution;
+        continue;
       }
+      execution.timer -= dt;
+      if (execution.timer > 0) continue;
+      delete enemy.deathKnifeExecution;
+      damageEnemy(enemy, execution.damage, 'energy', false, 'deathKnife');
+      grantDeathKnifeKill(execution.weapon, enemy);
     }
   }
 
@@ -8033,6 +8092,16 @@ const WEAPON_CODEX_TEXT = {
     weapon.timer -= dt;
     if (weapon.timer > 0) return;
     weapon.timer = 0.5;
+    const spikes = Array.from({ length: 12 }, () => {
+      const start = 0.12 + Math.random() * 0.42;
+      return {
+        angle: Math.random() * Math.PI * 2,
+        start,
+        end: Math.min(0.96, start + 0.2 + Math.random() * 0.24),
+        width: 0.022 + Math.random() * 0.018,
+        color: Math.random() < 0.5 ? '#b47bff' : '#8ee06a'
+      };
+    });
     state.patches.push({
       x: state.player.x,
       y: state.player.y,
@@ -8041,6 +8110,7 @@ const WEAPON_CODEX_TEXT = {
       uses: weapon.level >= 1 ? 4 : 3,
       damage: weapon.level >= 2 ? 19 : 16,
       used: new Set(),
+      spikes,
       dead: false
     });
   }
@@ -8048,6 +8118,7 @@ const WEAPON_CODEX_TEXT = {
   function updatePatches(dt) {
     for (const patch of state.patches) {
       if (patch.dead) continue;
+      if (!patch.used) patch.used = new Set();
       patch.life -= dt;
       if (patch.life <= 0) {
         patch.dead = true;
@@ -11424,9 +11495,12 @@ const WEAPON_CODEX_TEXT = {
       }
 
       if (enemy.curse) {
+        enemy.curse.sigilTimer = Math.max(0, (enemy.curse.sigilTimer || 0) - dt);
+        enemy.curse.hitTimer = Math.max(0, (enemy.curse.hitTimer || 0) - dt);
         enemy.curse.timer -= dt;
         if (enemy.curse.timer <= 0) {
           enemy.curse.timer += 1;
+          enemy.curse.hitTimer = 0.35;
           const speedDamage = enemy.speed * enemy.slowFactor * (enemy.energyLineSlow ? 0.75 : 1) * 10 + enemy.curse.bonus;
           damageEnemy(enemy, speedDamage, 'energy', true, 'evilEntangle', { dot: true });
         }
@@ -12933,6 +13007,7 @@ const WEAPON_CODEX_TEXT = {
     updateEnergyTowers(dt);
     updateSpawner(dt);
     updateEnemies(dt);
+    updateDeathKnifeExecutions(dt);
     updateIceSpikeFields(dt);
     updateClones(dt);
     updateTraps(dt);
@@ -13689,6 +13764,7 @@ const WEAPON_CODEX_TEXT = {
     drawRabbit(ctx);
     drawGiantWaterShuriken(ctx);
     drawPlayer(ctx);
+    drawIceStandoffOrbs(ctx);
     drawSymbioticVulture(ctx);
     drawExperienceOrbs(ctx);
     drawPlayerProjectiles(ctx);
@@ -14230,23 +14306,38 @@ const WEAPON_CODEX_TEXT = {
       ctx.strokeStyle = '#eaffd5';
       ctx.lineWidth = 0.04;
       ctx.stroke();
+
+      const ripeness = clamp(fruit.degree / 40, 0, 1);
+      if (ripeness > 0) {
+        ctx.save();
+        ctx.globalAlpha = ripeness;
+        ctx.beginPath();
+        ctx.arc(fruit.x, fruit.y, 0.22, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff3b2f';
+        ctx.fill();
+        ctx.restore();
+      }
     }
   }
 
   function drawCandies(ctx) {
     for (const candy of state.candies) {
       if (candy.dead) continue;
+      const color = candy.color || '#ff9ad5';
       if (!candy.landed) {
-        ctx.strokeStyle = 'rgba(255, 154, 213, 0.35)';
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = color;
         ctx.lineWidth = 0.04;
         ctx.beginPath();
         ctx.moveTo(candy.startX, candy.startY);
         ctx.lineTo(candy.x, candy.y);
         ctx.stroke();
+        ctx.restore();
       }
       ctx.beginPath();
       ctx.arc(candy.x, candy.y, 0.1, 0, Math.PI * 2);
-      ctx.fillStyle = '#ff9ad5';
+      ctx.fillStyle = color;
       ctx.fill();
     }
   }
@@ -14261,6 +14352,27 @@ const WEAPON_CODEX_TEXT = {
       ctx.strokeStyle = 'rgba(168, 255, 160, 0.55)';
       ctx.lineWidth = 0.05;
       ctx.stroke();
+
+      if (patch.spikes) {
+        for (const spike of patch.spikes) {
+          const baseX = patch.x + Math.cos(spike.angle) * patch.r * spike.start;
+          const baseY = patch.y + Math.sin(spike.angle) * patch.r * spike.start;
+          const tipX = patch.x + Math.cos(spike.angle) * patch.r * spike.end;
+          const tipY = patch.y + Math.sin(spike.angle) * patch.r * spike.end;
+          const perpX = -Math.sin(spike.angle) * spike.width;
+          const perpY = Math.cos(spike.angle) * spike.width;
+          ctx.beginPath();
+          ctx.moveTo(baseX + perpX, baseY + perpY);
+          ctx.lineTo(tipX, tipY);
+          ctx.lineTo(baseX - perpX, baseY - perpY);
+          ctx.closePath();
+          ctx.fillStyle = spike.color;
+          ctx.fill();
+          ctx.strokeStyle = spike.color === '#b47bff' ? '#dec2ff' : '#d6ffb8';
+          ctx.lineWidth = 0.018;
+          ctx.stroke();
+        }
+      }
     }
   }
 
@@ -14468,6 +14580,41 @@ const WEAPON_CODEX_TEXT = {
     ctx.fillRect(guard.x - 0.4, guard.y - guard.r - 0.28, 0.8 * ratio, 0.07);
   }
 
+  function drawIceStandoffOrbs(ctx) {
+    const player = state.player;
+    if (!player) return;
+    const weapon = player.weapons.find((item) => item.id === 'iceStandoff' && item.standoffTimer > 0);
+    if (!weapon) return;
+
+    const offset = player.r;
+    const time = performance.now() / 1000;
+    for (const dx of [-1, 1]) {
+      for (const dy of [-1, 1]) {
+        const x = player.x + dx * offset;
+        const y = player.y + dy * offset;
+        const pulse = 0.75 + Math.sin(time * 6 + dx + dy) * 0.15;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, 0.16);
+        glow.addColorStop(0, 'rgba(210, 248, 255, 0.95)');
+        glow.addColorStop(0.45, 'rgba(92, 192, 255, 0.55)');
+        glow.addColorStop(1, 'rgba(92, 192, 255, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, 0.16 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, 0.065, 0, Math.PI * 2);
+        ctx.fillStyle = '#e8fbff';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(123, 213, 255, 0.9)';
+        ctx.lineWidth = 0.025;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
   function drawSymbioticVulture(ctx) {
     const vulture = state.vulture;
     if (!vulture) return;
@@ -14513,17 +14660,156 @@ const WEAPON_CODEX_TEXT = {
     ctx.restore();
   }
 
+  function drawFlameWheel(ctx, x, y, radius, time, phase) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(71, 13, 5, 0.8)';
+    ctx.fill();
+
+    ctx.globalCompositeOperation = 'lighter';
+    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    glow.addColorStop(0, 'rgba(255, 247, 190, 0.95)');
+    glow.addColorStop(0.45, 'rgba(255, 166, 52, 0.75)');
+    glow.addColorStop(1, 'rgba(255, 57, 20, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.rotate(time * 2.4 + phase);
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (i / 6) * Math.PI * 2;
+      const length = radius * (0.62 + Math.sin(time * 9 + i * 1.7 + phase) * 0.12);
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(angle) * radius * 0.2, Math.sin(angle) * radius * 0.2);
+      ctx.lineTo(Math.cos(angle + 0.16) * length, Math.sin(angle + 0.16) * length);
+      ctx.lineTo(Math.cos(angle - 0.16) * length, Math.sin(angle - 0.16) * length);
+      ctx.closePath();
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 204, 78, 0.8)' : 'rgba(255, 102, 28, 0.72)';
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.92, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 185, 77, 0.9)';
+    ctx.lineWidth = 0.035;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawCart(ctx) {
     const cart = state.cart;
     if (!cart) return;
+    const time = performance.now() / 1000;
     ctx.save();
     ctx.translate(cart.x, cart.y);
     ctx.rotate(cart.angle);
-    ctx.fillStyle = '#ff9a52';
-    ctx.fillRect(-0.4, -0.25, 0.8, 0.5);
-    ctx.strokeStyle = '#ffd29a';
-    ctx.lineWidth = 0.05;
-    ctx.strokeRect(-0.4, -0.25, 0.8, 0.5);
+
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 4; i += 1) {
+      const flicker = 0.8 + Math.sin(time * 8 + i * 1.4) * 0.16;
+      ctx.beginPath();
+      ctx.moveTo(-0.38, -0.08 + i * 0.055);
+      ctx.lineTo(-0.55 - i * 0.055 - flicker * 0.1, -0.1 + i * 0.06);
+      ctx.lineTo(-0.38, 0.04 + i * 0.055);
+      ctx.closePath();
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 100, 28, 0.55)' : 'rgba(255, 211, 82, 0.45)';
+      ctx.fill();
+    }
+
+    drawFlameWheel(ctx, -0.25, 0.23, 0.18, time, 0);
+    drawFlameWheel(ctx, 0.25, 0.23, 0.18, time, 1.8);
+
+    const bodyGradient = ctx.createLinearGradient(-0.35, 0.2, 0.3, -0.24);
+    bodyGradient.addColorStop(0, 'rgba(255, 56, 18, 0.94)');
+    bodyGradient.addColorStop(0.55, 'rgba(255, 128, 28, 0.96)');
+    bodyGradient.addColorStop(1, 'rgba(255, 231, 133, 0.98)');
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(255, 70, 12, 0.65)';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(-0.38, 0.2);
+    ctx.quadraticCurveTo(-0.43, -0.04, -0.17, -0.12);
+    ctx.quadraticCurveTo(0.02, -0.31, 0.22, -0.13);
+    ctx.quadraticCurveTo(0.4, -0.02, 0.37, 0.18);
+    ctx.quadraticCurveTo(0.18, 0.26, -0.38, 0.2);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(92, 19, 5, 0.8)';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.moveTo(-0.38, 0.2);
+    ctx.quadraticCurveTo(-0.43, -0.04, -0.17, -0.12);
+    ctx.quadraticCurveTo(0.02, -0.31, 0.22, -0.13);
+    ctx.quadraticCurveTo(0.4, -0.02, 0.37, 0.18);
+    ctx.quadraticCurveTo(0.18, 0.26, -0.38, 0.2);
+    ctx.closePath();
+    ctx.fillStyle = bodyGradient;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 237, 174, 0.72)';
+    ctx.lineWidth = 0.045;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-0.17, -0.1);
+    ctx.quadraticCurveTo(-0.11, -0.28, 0.02, -0.3);
+    ctx.quadraticCurveTo(0.18, -0.28, 0.24, -0.08);
+    ctx.lineTo(0.12, -0.03);
+    ctx.lineTo(-0.06, -0.04);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(114, 30, 8, 0.72)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 172, 66, 0.62)';
+    ctx.lineWidth = 0.028;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-0.07, -0.11);
+    ctx.lineTo(0.01, -0.24);
+    ctx.lineTo(0.1, -0.23);
+    ctx.lineTo(0.15, -0.09);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(64, 15, 7, 0.68)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(0.02, 0.02, 0.15, 0.075, -0.08, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 247, 191, 0.85)';
+    ctx.fill();
+
+    for (let i = 0; i < 3; i += 1) {
+      const sway = Math.sin(time * 7 + i * 2.1) * 0.04;
+      ctx.beginPath();
+      ctx.moveTo(-0.05 + i * 0.1, -0.12);
+      ctx.quadraticCurveTo(-0.12 + i * 0.1 + sway, -0.28, -0.03 + i * 0.1, -0.4 - (i % 2) * 0.05);
+      ctx.quadraticCurveTo(0.03 + i * 0.1, -0.25, 0.1 + i * 0.1, -0.12);
+      ctx.closePath();
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 221, 104, 0.75)' : 'rgba(255, 116, 31, 0.68)';
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(0.31, 0.02, 0.055, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 218, 0.95)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0.31, 0.02, 0.11, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 224, 105, 0.18)';
+    ctx.fill();
+
+    for (let i = 0; i < 7; i += 1) {
+      const seed = i * 2.37;
+      const sparkX = Math.sin(time * 4 + seed) * 0.45;
+      const sparkY = -0.32 - ((time * 0.9 + i * 0.13) % 0.6);
+      ctx.beginPath();
+      ctx.arc(sparkX, sparkY, 0.018 + (i % 3) * 0.008, 0, Math.PI * 2);
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 238, 156, 0.85)' : 'rgba(255, 120, 38, 0.72)';
+      ctx.fill();
+    }
+
     ctx.restore();
   }
 
@@ -14836,6 +15122,48 @@ const WEAPON_CODEX_TEXT = {
     ctx.restore();
   }
 
+  function drawMiniPiranha(ctx, x, y, flip, seed) {
+    const bob = Math.sin(performance.now() / 220 + seed) * 0.03;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(flip ? -1 : 1, 1);
+    ctx.fillStyle = '#ff6f86';
+    ctx.strokeStyle = '#ffd0d6';
+    ctx.lineWidth = 0.03;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 0.17, 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-0.14, -0.05);
+    ctx.lineTo(-0.3, -0.13);
+    ctx.lineTo(-0.27, 0);
+    ctx.lineTo(-0.3, 0.13);
+    ctx.lineTo(-0.14, 0.05);
+    ctx.closePath();
+    ctx.fillStyle = '#e94f70';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(0.07, -0.02, 0.032, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff8f4';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0.078, -0.02, 0.014, 0, Math.PI * 2);
+    ctx.fillStyle = '#251018';
+    ctx.fill();
+
+    ctx.strokeStyle = '#fff1e8';
+    ctx.lineWidth = 0.018;
+    ctx.beginPath();
+    ctx.moveTo(0.12, 0.035);
+    ctx.lineTo(0.16, 0.02);
+    ctx.lineTo(0.12, 0.005);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawPiranhaLinks(ctx) {
     const player = state.player;
     if (!player) return;
@@ -14851,6 +15179,11 @@ const WEAPON_CODEX_TEXT = {
       ctx.moveTo(player.x, player.y);
       ctx.lineTo(target.x, target.y);
       ctx.stroke();
+
+      const side = weapon.fishSide === 'right' ? 'right' : 'left';
+      const fishX = target.x + (side === 'left' ? -target.r * 0.85 : target.r * 0.85);
+      const fishY = target.y - target.r - 0.55;
+      drawMiniPiranha(ctx, fishX, fishY, side === 'right', target.id);
     }
   }
 
@@ -14895,6 +15228,117 @@ const WEAPON_CODEX_TEXT = {
       ctx.fill();
       ctx.restore();
     }
+  }
+
+  function drawCurseOverlay(ctx, enemy) {
+    const curse = enemy.curse;
+    if (!curse) return;
+
+    const pulse = 0.75 + Math.sin(performance.now() / 260 + enemy.id) * 0.2;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.r + 0.12, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(190, 150, 255, ${0.24 + pulse * 0.16})`;
+    ctx.lineWidth = 0.035;
+    ctx.stroke();
+
+    const hitAlpha = clamp((curse.hitTimer || 0) / 0.35, 0, 1);
+    if (hitAlpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = hitAlpha * 0.34;
+      ctx.beginPath();
+      ctx.arc(0, 0, enemy.r, 0, Math.PI * 2);
+      ctx.fillStyle = '#c79cff';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const sigilTimer = curse.sigilTimer || 0;
+    if (sigilTimer <= 0) return;
+    const alpha = sigilTimer > 0.5 ? 1 : sigilTimer / 0.5;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(0, -enemy.r * 0.1);
+    ctx.rotate(-0.12);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(196, 158, 255, 0.16)';
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(240, 232, 255, 0.9)';
+    ctx.strokeStyle = '#b78cff';
+    ctx.lineWidth = 0.035;
+    ctx.fillRect(-0.13, -0.2, 0.26, 0.4);
+    ctx.strokeRect(-0.13, -0.2, 0.26, 0.4);
+
+    ctx.strokeStyle = 'rgba(112, 72, 170, 0.9)';
+    ctx.lineWidth = 0.022;
+    ctx.beginPath();
+    ctx.moveTo(-0.07, -0.12);
+    ctx.lineTo(0.07, -0.12);
+    ctx.moveTo(0, -0.12);
+    ctx.lineTo(0, 0.04);
+    ctx.moveTo(-0.07, 0.04);
+    ctx.lineTo(0.07, 0.04);
+    ctx.moveTo(-0.07, 0.12);
+    ctx.lineTo(0.07, 0.12);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, 0.15, 0.035, 0, Math.PI * 2);
+    ctx.fillStyle = '#8e5be0';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawDeathKnifeExecution(ctx, enemy) {
+    const execution = enemy.deathKnifeExecution;
+    if (!execution) return;
+    const progress = clamp(1 - execution.timer / execution.duration, 0, 1);
+    const tipY = -0.82 + progress * 0.82;
+    const hiltY = tipY - 0.38;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.r + 0.16, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(142, 92, 255, ${0.12 + progress * 0.16})`;
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, tipY);
+    ctx.lineTo(-0.055, hiltY);
+    ctx.lineTo(0.055, hiltY);
+    ctx.closePath();
+    ctx.fillStyle = '#eff6ff';
+    ctx.fill();
+    ctx.strokeStyle = '#a9c8ff';
+    ctx.lineWidth = 0.02;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, tipY);
+    ctx.lineTo(0, hiltY);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = 0.015;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-0.14, hiltY);
+    ctx.lineTo(0.14, hiltY);
+    ctx.strokeStyle = '#b79bff';
+    ctx.lineWidth = 0.045;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, hiltY);
+    ctx.lineTo(0, hiltY - 0.16);
+    ctx.strokeStyle = '#7c5cba';
+    ctx.lineWidth = 0.05;
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawEnemies(ctx) {
@@ -15194,6 +15638,9 @@ const WEAPON_CODEX_TEXT = {
         ctx.globalAlpha = 1;
       }
 
+      drawCurseOverlay(ctx, enemy);
+      drawDeathKnifeExecution(ctx, enemy);
+
       if (enemy.isElite) {
         ctx.beginPath();
         ctx.arc(0, 0, enemy.r + 0.1, 0, Math.PI * 2);
@@ -15404,6 +15851,37 @@ const WEAPON_CODEX_TEXT = {
         ctx.strokeStyle = '#d8f7ff';
         ctx.lineWidth = 0.05;
         ctx.stroke();
+
+        ctx.save();
+        ctx.translate(projectile.x, projectile.y);
+        ctx.rotate(performance.now() / 650);
+        const flakeRadius = projectile.r * 0.78;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+        ctx.lineWidth = 0.022;
+        for (let i = 0; i < 6; i += 1) {
+          const angle = (i / 6) * Math.PI * 2;
+          const dx = Math.cos(angle);
+          const dy = Math.sin(angle);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(dx * flakeRadius, dy * flakeRadius);
+          ctx.stroke();
+          const branchX = dx * flakeRadius * 0.58;
+          const branchY = dy * flakeRadius * 0.58;
+          const perpX = -dy;
+          const perpY = dx;
+          ctx.beginPath();
+          ctx.moveTo(branchX, branchY);
+          ctx.lineTo(branchX + dx * flakeRadius * 0.18 + perpX * flakeRadius * 0.16, branchY + dy * flakeRadius * 0.18 + perpY * flakeRadius * 0.16);
+          ctx.moveTo(branchX, branchY);
+          ctx.lineTo(branchX + dx * flakeRadius * 0.18 - perpX * flakeRadius * 0.16, branchY + dy * flakeRadius * 0.18 - perpY * flakeRadius * 0.16);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(0, 0, 0.035, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
       } else if (projectile.kind === 'relicBolt') {
         const angle = Math.atan2(projectile.vy, projectile.vx);
         ctx.strokeStyle = '#ffd98a';

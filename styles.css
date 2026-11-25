@@ -1777,6 +1777,65 @@ kbd {
   background: rgba(6, 11, 22, 0.5);
 }
 
+.codex-weapon-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.codex-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.codex-toggle:hover {
+  border-color: transparent;
+  background: rgba(123, 213, 255, 0.06);
+  transform: none;
+}
+
+.codex-toggle .codex-card-head {
+  flex: 1;
+  margin: 0;
+}
+
+.codex-toggle-icon {
+  width: 18px;
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+}
+
+.codex-weapon-card .codex-tags {
+  margin: 0;
+  padding: 0 12px 6px;
+}
+
+.codex-weapon-details {
+  display: none;
+  margin-top: 2px;
+  padding: 7px 12px 12px;
+  border-top: 1px solid rgba(140, 178, 255, 0.1);
+}
+
+.codex-weapon-card.is-expanded .codex-weapon-details {
+  display: block;
+}
+
+.codex-weapon-card.is-expanded {
+  border-color: rgba(123, 213, 255, 0.32);
+}
+
 .codex-card-head {
   display: flex;
   align-items: baseline;
