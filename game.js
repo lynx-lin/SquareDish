@@ -2075,7 +2075,11 @@ const WEAPON_CODEX_TEXT = {
     height: window.innerHeight,
     dpr: 1,
     menu: $('menu'),
+    menuPanel: $('menu-panel'),
     menuDemoBadge: $('menu-demo-badge'),
+    menuDemoToggle: $('menu-demo-toggle'),
+    menuDemoToggleIcon: $('menu-demo-toggle-icon'),
+    menuDemoToggleLabel: $('menu-demo-toggle-label'),
     menuDemoWeapons: $('menu-demo-weapons'),
     help: $('help'),
     hud: $('hud'),
@@ -4574,6 +4578,7 @@ const WEAPON_CODEX_TEXT = {
 
   function bindEvents() {
     $('start-btn').addEventListener('click', startRun);
+    ui.menuDemoToggle.addEventListener('click', toggleMenuDemoView);
     $('weapon-select-btn').addEventListener('click', openWeaponSelect);
     $('weapon-random').addEventListener('click', randomizeWeaponDraft);
     $('weapon-select-confirm').addEventListener('click', confirmWeaponSelect);
@@ -5118,6 +5123,7 @@ const WEAPON_CODEX_TEXT = {
     renderMenuRelics();
 
     setHidden(ui.menu, false);
+    setMenuPanelCollapsed(false);
     setHidden(ui.weaponSelect, true);
     setHidden(ui.help, true);
     setHidden(ui.records, true);
@@ -5139,6 +5145,32 @@ const WEAPON_CODEX_TEXT = {
   function stopMenuDemo() {
     if (!menuDemo) return;
     menuDemo = null;
+  }
+
+  function setMenuPanelCollapsed(collapsed) {
+    if (!ui.menu) return;
+    ui.menu.classList.toggle('is-collapsed', collapsed);
+    if (ui.menuPanel) ui.menuPanel.inert = collapsed;
+    if (ui.menuDemoToggle) {
+      ui.menuDemoToggle.setAttribute('aria-expanded', String(!collapsed));
+      ui.menuDemoToggle.title = collapsed ? '展开主菜单' : '隐藏菜单，观看 AI 演示';
+    }
+    if (ui.menuDemoToggleIcon) {
+      ui.menuDemoToggleIcon.textContent = collapsed ? '▸' : '▾';
+    }
+    if (ui.menuDemoToggleLabel) {
+      ui.menuDemoToggleLabel.textContent = collapsed ? '展开菜单' : '隐藏菜单';
+    }
+  }
+
+  function toggleMenuDemoView() {
+    if (!menuDemo || state.mode !== 'menu') return;
+    const collapsed = !ui.menu.classList.contains('is-collapsed');
+    setMenuPanelCollapsed(collapsed);
+    if (collapsed && ui.menuDemoToggle) {
+      ui.menuDemoToggle.focus({ preventScroll: true });
+    }
+    updateCamera();
   }
 
   function canRestartMenuDemo() {
@@ -13083,7 +13115,8 @@ const WEAPON_CODEX_TEXT = {
     const viewHeight = ui.height / scale;
     const halfWidth = viewWidth / 2;
     const halfHeight = viewHeight / 2;
-    const focusX = menuDemo && ui.width >= 1200 ? 0.74 : 0.5;
+    const menuCollapsed = ui.menu && ui.menu.classList.contains('is-collapsed');
+    const focusX = menuDemo && !menuCollapsed && ui.width >= 1200 ? 0.74 : 0.5;
     const focusY = menuDemo ? 0.52 : 0.5;
     const targetX = state.player.x - (focusX - 0.5) * ui.width / scale;
     const targetY = state.player.y - (focusY - 0.5) * ui.height / scale;

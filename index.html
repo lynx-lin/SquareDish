@@ -64,12 +64,16 @@
   </div>
 
   <div id="menu" class="overlay">
+    <button id="menu-demo-toggle" class="menu-demo-toggle" type="button" aria-controls="menu-panel" aria-expanded="true" title="隐藏菜单，观看 AI 演示">
+      <span id="menu-demo-toggle-icon" class="menu-demo-toggle-icon" aria-hidden="true">▾</span>
+      <span id="menu-demo-toggle-label">隐藏菜单</span>
+    </button>
     <div id="menu-demo-badge" class="menu-demo-badge hidden" aria-hidden="true">
       <span class="menu-demo-dot"></span>
       <span class="menu-demo-label">AI 实战演示</span>
       <span id="menu-demo-weapons" class="menu-demo-weapons"></span>
     </div>
-    <div class="panel menu-panel">
+    <div id="menu-panel" class="panel menu-panel">
       <p class="eyebrow">SURVIVOR PROTOTYPE</p>
       <h1 class="game-title">方形皿·测试版</h1>
       <p class="subtitle">选择关卡与难度，存活10分钟并击败最终BOSS。</p>
