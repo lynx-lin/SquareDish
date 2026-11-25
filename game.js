@@ -14659,154 +14659,154 @@ const WEAPON_CODEX_TEXT = {
     ctx.restore();
   }
 
-  function drawFlameWheel(ctx, x, y, radius, time, phase) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(71, 13, 5, 0.8)';
-    ctx.fill();
-
-    ctx.globalCompositeOperation = 'lighter';
-    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-    glow.addColorStop(0, 'rgba(255, 247, 190, 0.95)');
-    glow.addColorStop(0.45, 'rgba(255, 166, 52, 0.75)');
-    glow.addColorStop(1, 'rgba(255, 57, 20, 0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.rotate(time * 2.4 + phase);
-    for (let i = 0; i < 6; i += 1) {
-      const angle = (i / 6) * Math.PI * 2;
-      const length = radius * (0.62 + Math.sin(time * 9 + i * 1.7 + phase) * 0.12);
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(angle) * radius * 0.2, Math.sin(angle) * radius * 0.2);
-      ctx.lineTo(Math.cos(angle + 0.16) * length, Math.sin(angle + 0.16) * length);
-      ctx.lineTo(Math.cos(angle - 0.16) * length, Math.sin(angle - 0.16) * length);
-      ctx.closePath();
-      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 204, 78, 0.8)' : 'rgba(255, 102, 28, 0.72)';
-      ctx.fill();
-    }
-    ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.92, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 185, 77, 0.9)';
-    ctx.lineWidth = 0.035;
-    ctx.stroke();
-    ctx.restore();
-  }
-
   function drawCart(ctx) {
     const cart = state.cart;
     if (!cart) return;
     const time = performance.now() / 1000;
+    const halfW = 0.4;
+    const halfH = 0.25;
+
     ctx.save();
     ctx.translate(cart.x, cart.y);
     ctx.rotate(cart.angle);
 
+    // 尾焰全部从车尾喷出，车头保持干净。
+    ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < 4; i += 1) {
-      const flicker = 0.8 + Math.sin(time * 8 + i * 1.4) * 0.16;
+    const rearGlow = ctx.createRadialGradient(-halfW - 0.08, 0, 0, -halfW - 0.08, 0, 0.55);
+    rearGlow.addColorStop(0, 'rgba(255, 226, 132, 0.55)');
+    rearGlow.addColorStop(0.5, 'rgba(255, 96, 22, 0.22)');
+    rearGlow.addColorStop(1, 'rgba(255, 50, 10, 0)');
+    ctx.fillStyle = rearGlow;
+    ctx.beginPath();
+    ctx.arc(-halfW - 0.08, 0, 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let i = 0; i < 5; i += 1) {
+      const y = -0.17 + i * 0.085;
+      const flicker = Math.sin(time * 9 + i * 1.9) * 0.08;
+      const length = 0.34 + flicker + (i % 2) * 0.06;
+      const half = 0.048 + (i % 2) * 0.012;
       ctx.beginPath();
-      ctx.moveTo(-0.38, -0.08 + i * 0.055);
-      ctx.lineTo(-0.55 - i * 0.055 - flicker * 0.1, -0.1 + i * 0.06);
-      ctx.lineTo(-0.38, 0.04 + i * 0.055);
+      ctx.moveTo(-halfW + 0.02, y - half);
+      ctx.quadraticCurveTo(-halfW - length * 0.55, y - half * 0.5, -halfW - length, y);
+      ctx.quadraticCurveTo(-halfW - length * 0.55, y + half * 0.5, -halfW + 0.02, y + half);
       ctx.closePath();
-      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 100, 28, 0.55)' : 'rgba(255, 211, 82, 0.45)';
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 108, 22, 0.7)' : 'rgba(255, 220, 96, 0.58)';
       ctx.fill();
     }
 
-    drawFlameWheel(ctx, -0.25, 0.23, 0.18, time, 0);
-    drawFlameWheel(ctx, 0.25, 0.23, 0.18, time, 1.8);
-
-    const bodyGradient = ctx.createLinearGradient(-0.35, 0.2, 0.3, -0.24);
-    bodyGradient.addColorStop(0, 'rgba(255, 56, 18, 0.94)');
-    bodyGradient.addColorStop(0.55, 'rgba(255, 128, 28, 0.96)');
-    bodyGradient.addColorStop(1, 'rgba(255, 231, 133, 0.98)');
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(255, 70, 12, 0.65)';
-    ctx.shadowBlur = 14;
-    ctx.beginPath();
-    ctx.moveTo(-0.38, 0.2);
-    ctx.quadraticCurveTo(-0.43, -0.04, -0.17, -0.12);
-    ctx.quadraticCurveTo(0.02, -0.31, 0.22, -0.13);
-    ctx.quadraticCurveTo(0.4, -0.02, 0.37, 0.18);
-    ctx.quadraticCurveTo(0.18, 0.26, -0.38, 0.2);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(92, 19, 5, 0.8)';
-    ctx.fill();
+    for (let i = 0; i < 8; i += 1) {
+      const sparkX = -halfW - 0.16 - ((time * 0.9 + i * 0.17) % 0.6);
+      const sparkY = Math.sin(time * 4.5 + i * 1.7) * 0.24;
+      ctx.beginPath();
+      ctx.arc(sparkX, sparkY, 0.014 + (i % 3) * 0.006, 0, Math.PI * 2);
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 239, 155, 0.85)' : 'rgba(255, 116, 32, 0.75)';
+      ctx.fill();
+    }
     ctx.restore();
 
-    ctx.beginPath();
-    ctx.moveTo(-0.38, 0.2);
-    ctx.quadraticCurveTo(-0.43, -0.04, -0.17, -0.12);
-    ctx.quadraticCurveTo(0.02, -0.31, 0.22, -0.13);
-    ctx.quadraticCurveTo(0.4, -0.02, 0.37, 0.18);
-    ctx.quadraticCurveTo(0.18, 0.26, -0.38, 0.2);
-    ctx.closePath();
+    // 俯视车体：完整覆盖 0.8 × 0.5 的矩形碰撞箱。
+    ctx.save();
+    ctx.shadowColor = 'rgba(255, 72, 14, 0.6)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = 'rgba(70, 13, 7, 0.94)';
+    ctx.fillRect(-halfW, -halfH, halfW * 2, halfH * 2);
+    ctx.restore();
+
+    const bodyGradient = ctx.createLinearGradient(-halfW, 0, halfW, 0);
+    bodyGradient.addColorStop(0, 'rgba(148, 30, 8, 0.96)');
+    bodyGradient.addColorStop(0.55, 'rgba(255, 104, 24, 0.97)');
+    bodyGradient.addColorStop(1, 'rgba(255, 214, 105, 0.98)');
     ctx.fillStyle = bodyGradient;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 237, 174, 0.72)';
-    ctx.lineWidth = 0.045;
+    ctx.fillRect(-halfW + 0.025, -halfH + 0.025, halfW * 2 - 0.05, halfH * 2 - 0.05);
+
+    ctx.strokeStyle = 'rgba(255, 225, 139, 0.72)';
+    ctx.lineWidth = 0.025;
+    ctx.beginPath();
+    ctx.moveTo(-0.27, -0.205);
+    ctx.lineTo(0.27, -0.205);
+    ctx.moveTo(-0.27, 0.205);
+    ctx.lineTo(0.27, 0.205);
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.moveTo(-0.17, -0.1);
-    ctx.quadraticCurveTo(-0.11, -0.28, 0.02, -0.3);
-    ctx.quadraticCurveTo(0.18, -0.28, 0.24, -0.08);
-    ctx.lineTo(0.12, -0.03);
-    ctx.lineTo(-0.06, -0.04);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(114, 30, 8, 0.72)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 172, 66, 0.62)';
-    ctx.lineWidth = 0.028;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(-0.07, -0.11);
-    ctx.lineTo(0.01, -0.24);
-    ctx.lineTo(0.1, -0.23);
-    ctx.lineTo(0.15, -0.09);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(64, 15, 7, 0.68)';
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.ellipse(0.02, 0.02, 0.15, 0.075, -0.08, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 247, 191, 0.85)';
-    ctx.fill();
-
-    for (let i = 0; i < 3; i += 1) {
-      const sway = Math.sin(time * 7 + i * 2.1) * 0.04;
-      ctx.beginPath();
-      ctx.moveTo(-0.05 + i * 0.1, -0.12);
-      ctx.quadraticCurveTo(-0.12 + i * 0.1 + sway, -0.28, -0.03 + i * 0.1, -0.4 - (i % 2) * 0.05);
-      ctx.quadraticCurveTo(0.03 + i * 0.1, -0.25, 0.1 + i * 0.1, -0.12);
-      ctx.closePath();
-      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 221, 104, 0.75)' : 'rgba(255, 116, 31, 0.68)';
-      ctx.fill();
+    // 俯视视角下的四个车轮，全部藏在矩形碰撞箱内部。
+    for (const wheelX of [-0.27, 0.27]) {
+      for (const wheelY of [-0.21, 0.21]) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(wheelX, wheelY, 0.095, 0.042, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#2b0c08';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 151, 53, 0.9)';
+        ctx.lineWidth = 0.022;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(wheelX, wheelY, 0.04, 0.016, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 215, 112, 0.75)';
+        ctx.fill();
+        ctx.restore();
+      }
     }
 
+    // 驾驶舱挡风玻璃。
     ctx.beginPath();
-    ctx.arc(0.31, 0.02, 0.055, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 218, 0.95)';
+    ctx.moveTo(-0.03, -0.17);
+    ctx.lineTo(0.17, -0.135);
+    ctx.lineTo(0.2, 0.135);
+    ctx.lineTo(-0.03, 0.17);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(62, 13, 8, 0.76)';
     ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 172, 66, 0.7)';
+    ctx.lineWidth = 0.025;
+    ctx.stroke();
+
+    // 车头灯与车头火焰核心。
+    for (const lightY of [-0.12, 0.12]) {
+      ctx.beginPath();
+      ctx.arc(0.33, lightY, 0.045, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 254, 218, 0.95)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0.33, lightY, 0.095, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 224, 105, 0.18)';
+      ctx.fill();
+    }
     ctx.beginPath();
-    ctx.arc(0.31, 0.02, 0.11, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 224, 105, 0.18)';
+    ctx.ellipse(0.02, 0, 0.14, 0.07, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 247, 191, 0.88)';
     ctx.fill();
 
-    for (let i = 0; i < 7; i += 1) {
-      const seed = i * 2.37;
-      const sparkX = Math.sin(time * 4 + seed) * 0.45;
-      const sparkY = -0.32 - ((time * 0.9 + i * 0.13) % 0.6);
+    // 车尾排气口。
+    for (const ventY of [-0.13, 0.13]) {
       ctx.beginPath();
-      ctx.arc(sparkX, sparkY, 0.018 + (i % 3) * 0.008, 0, Math.PI * 2);
-      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 238, 156, 0.85)' : 'rgba(255, 120, 38, 0.72)';
+      ctx.arc(-halfW + 0.02, ventY, 0.055, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(45, 11, 7, 0.9)';
       ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 164, 56, 0.85)';
+      ctx.lineWidth = 0.022;
+      ctx.stroke();
+    }
+
+    // 完整矩形碰撞箱边界。
+    ctx.strokeStyle = 'rgba(255, 231, 151, 0.95)';
+    ctx.lineWidth = 0.045;
+    ctx.strokeRect(-halfW, -halfH, halfW * 2, halfH * 2);
+
+    ctx.strokeStyle = 'rgba(255, 255, 232, 0.9)';
+    ctx.lineWidth = 0.028;
+    const corner = 0.075;
+    for (const cornerX of [-halfW, halfW]) {
+      for (const cornerY of [-halfH, halfH]) {
+        const sx = cornerX < 0 ? 1 : -1;
+        const sy = cornerY < 0 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(cornerX + sx * corner, cornerY);
+        ctx.lineTo(cornerX, cornerY);
+        ctx.lineTo(cornerX, cornerY + sy * corner);
+        ctx.stroke();
+      }
     }
 
     ctx.restore();
