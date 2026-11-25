@@ -2542,9 +2542,26 @@ const WEAPON_CODEX_TEXT = {
       ...base.unlockedWeapons,
       ...((raw.unlockedWeapons && typeof raw.unlockedWeapons === 'object') ? raw.unlockedWeapons : {})
     };
-    profile.starterSelected = raw.starterSelected === undefined
-      ? true
-      : Boolean(raw.starterSelected);
+    // 旧版存档没有 starterSelected 字段：只有确有进度时才沿用“已选开局武器”。
+    // 空槽或异常槽（例如旧版遗留的全解锁状态）重新进入开局选择，并重置解锁表。
+    const legacyHasProgress = profile.player.level > 1
+      || (Array.isArray(raw.loadout) && raw.loadout.length > 0)
+      || (Array.isArray(raw.starterWeaponIds) && raw.starterWeaponIds.length > 0)
+      || (Array.isArray(raw.records) && raw.records.length > 0)
+      || Object.keys(profile.clears).length > 0
+      || Object.keys(profile.weaponLevels).length > 0
+      || profile.inventory.length > 0
+      || Number(profile.player.currency) > 0
+      || (raw.weaponProficiency && Object.values(raw.weaponProficiency).some((value) => Number(value) > 0))
+      || (Array.isArray(raw.unlockedRelics) && raw.unlockedRelics.length > 1);
+    if (!legacyHasProgress) {
+      profile.unlockedWeapons = { ...base.unlockedWeapons };
+      profile.starterSelected = false;
+    } else {
+      profile.starterSelected = raw.starterSelected === undefined
+        ? true
+        : Boolean(raw.starterSelected);
+    }
     profile.starterWeaponIds = Array.isArray(raw.starterWeaponIds)
       ? raw.starterWeaponIds.filter((id) => getWeaponById(id)).slice(0, 3)
       : [];
