@@ -8040,7 +8040,7 @@ const WEAPON_CODEX_TEXT = {
       for (const enemy of state.enemies) {
         if (enemy.dead) continue;
         if (dist2(candy.x, candy.y, enemy.x, enemy.y) > (enemy.r + 0.1) ** 2) continue;
-        const type = chooseCandyType(enemy, candy.level >= 2);
+        const type = chooseCandyType(enemy, candy.level >= 2, candy.damage);
         damageEnemy(enemy, candy.damage, type, false, 'colorCandy');
         candy.dead = true;
         break;
@@ -8049,17 +8049,68 @@ const WEAPON_CODEX_TEXT = {
     state.candies = state.candies.filter((candy) => !candy.dead);
   }
 
-  function chooseCandyType(enemy, best = false) {
+  function candyTypeDamage(enemy, type, amount) {
+    const player = state.player;
+    const conversion = player ? player.damageConversion : null;
+    const effectiveType = conversion && type === 'physical' ? conversion : type;
+
+    if (effectiveType === 'poison' && (enemy.immunePoison || enemy.immuneDot)) return 0;
+    if (effectiveType === 'ice' && enemy.immuneIce) return 0;
+    if (effectiveType === 'physical' && enemy.immunePhysical) return 0;
+    if (effectiveType === 'energy' && enemy.immuneEnergy) return 0;
+    if (
+      enemy.type === 'geneBoss' &&
+      enemy.geneImmunityTimer > 0 &&
+      enemy.geneImmuneType === effectiveType
+    ) {
+      return 0;
+    }
+
+    let damage = amount;
+    if (
+      enemy.type === 'elementShifter' &&
+      !enemy.shifterFirstHit &&
+      enemy.shifterElement === effectiveType
+    ) {
+      damage *= 0.1;
+    }
+    if (enemy.damageVulnerable > 1) damage *= enemy.damageVulnerable;
+    if (effectiveType === 'ice') damage *= enemy.iceVulnerable || 1;
+    if (effectiveType === 'energy') damage *= enemy.energyVulnerable || 1;
+
+    const ignoreReduction = Boolean(player) && effectiveType === 'ice' && player.hasElementPearl;
+    if (!ignoreReduction) {
+      if (effectiveType === 'physical') damage *= 1 - (enemy.physicalReduction || 0);
+      if (effectiveType === 'energy') damage *= 1 - (enemy.energyReduction || 0);
+      damage *= 1 - (enemy.damageReduction || 0);
+      damage = Math.max(0, damage - (enemy.flatReduction || 0));
+      if (Number.isFinite(enemy.damageCap)) damage = Math.min(damage, enemy.damageCap);
+    }
+    return Math.max(0, damage);
+  }
+
+  function chooseCandyType(enemy, best = false, amount = 13) {
     const types = ['physical', 'ice', 'poison', 'energy'];
-    const available = types.filter((type) => (
-      !(type === 'physical' && enemy.immunePhysical) &&
-      !(type === 'energy' && enemy.immuneEnergy) &&
-      !(type === 'ice' && enemy.immuneIce) &&
-      !(type === 'poison' && (enemy.immunePoison || enemy.immuneDot))
-    ));
+    const scores = types.map((type) => candyTypeDamage(enemy, type, amount));
+    const available = types.filter((type, index) => scores[index] > 0);
     if (available.length === 0) return 'physical';
-    if (best) return available[0];
-    return available[Math.floor(Math.random() * available.length)];
+
+    if (!best) {
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    let bestDamage = 0;
+    let bestTypes = [];
+    types.forEach((type, index) => {
+      if (scores[index] <= 0) return;
+      if (scores[index] > bestDamage + 1e-9) {
+        bestDamage = scores[index];
+        bestTypes = [type];
+      } else if (Math.abs(scores[index] - bestDamage) <= 1e-9) {
+        bestTypes.push(type);
+      }
+    });
+    return bestTypes[Math.floor(Math.random() * bestTypes.length)] || 'physical';
   }
 
   function updateDeathKnifeWeapon(weapon, dt) {
