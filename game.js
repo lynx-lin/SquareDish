@@ -5182,6 +5182,7 @@ const WEAPON_CODEX_TEXT = {
       player.lastHp = player.maxHp;
       player.invuln = 0;
       player.currentMoveSpeed = 0;
+      player.actualMoveSpeed = 0;
     }
 
     seedMenuDemoEnemies();
@@ -5530,6 +5531,7 @@ const WEAPON_CODEX_TEXT = {
       phantomCooldown: 0,
       phantomContactTimer: 0,
       currentMoveSpeed: 0,
+      actualMoveSpeed: 0,
       hasRelicJewelry: hasRelic('relicJewelry'),
       hasFruitBag: hasRelic('fruitBag'),
       fruitBagUsed: false,
@@ -5750,11 +5752,16 @@ const WEAPON_CODEX_TEXT = {
 
     player.currentMoveSpeed = moving ? speed * moveIntensity : 0;
     player.displayMoveSpeed = speed;
+    const beforeMoveX = player.x;
+    const beforeMoveY = player.y;
     if (moving) {
       const step = speed * moveIntensity * dt;
       player.x = clamp(player.x + moveX * step, PLAYER.radius, WORLD.w - PLAYER.radius);
       player.y = clamp(player.y + moveY * step, PLAYER.radius, WORLD.h - PLAYER.radius);
     }
+    player.actualMoveSpeed = dt > 0
+      ? Math.hypot(player.x - beforeMoveX, player.y - beforeMoveY) / dt
+      : 0;
 
     if (running) {
       player.stamina = Math.max(0, player.stamina - PLAYER.staminaDrain * dt);
@@ -13176,7 +13183,10 @@ const WEAPON_CODEX_TEXT = {
     ui.difficultyBadge.className = state.difficulty === 'normal'
       ? 'difficulty-badge'
       : `difficulty-badge ${state.difficulty}`;
-    ui.moveSpeed.textContent = `移速 ${(player.displayMoveSpeed || PLAYER.walkSpeed).toFixed(2)} m/s`;
+    const shownMoveSpeed = TOUCH_DEVICE
+      ? (player.actualMoveSpeed || 0)
+      : (player.displayMoveSpeed || PLAYER.walkSpeed);
+    ui.moveSpeed.textContent = `移速 ${shownMoveSpeed.toFixed(2)} m/s`;
     if (ui.touchMoveSpeed) {
       ui.touchMoveSpeed.textContent = ui.moveSpeed.textContent;
     }
