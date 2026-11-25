@@ -456,12 +456,13 @@ button {
 
 .menu-demo-toggle {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 18px);
-  right: calc(env(safe-area-inset-right, 0px) + 24px);
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  left: calc(env(safe-area-inset-left, 0px) + 24px);
   z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  min-height: 32px;
   padding: 8px 12px;
   border: 1px solid rgba(140, 178, 255, 0.28);
   border-radius: 999px;
@@ -474,6 +475,7 @@ button {
   letter-spacing: 0.06em;
   line-height: 1;
   white-space: nowrap;
+  touch-action: manipulation;
 }
 
 .menu-demo-toggle:hover {
@@ -580,8 +582,9 @@ button {
 
 @media (max-width: 640px) {
   .menu-demo-toggle {
-    top: calc(env(safe-area-inset-top, 0px) + 12px);
-    right: calc(env(safe-area-inset-right, 0px) + 12px);
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
+    left: calc(env(safe-area-inset-left, 0px) + 12px);
+    min-height: 32px;
     padding: 7px 10px;
     font-size: 10px;
   }
