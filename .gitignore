@@ -1,0 +1,6 @@
+_site/
+dist/
+.tmp-*
+*.log
+Thumbs.db
+.DS_Store

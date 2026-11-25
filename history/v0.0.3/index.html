@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>方形皿·测试版</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="game" aria-label="游戏画面"></canvas>
+
+  <div id="hud" class="hidden" aria-live="off">
+    <div class="hud-top-left">
+      <div class="bar-row">
+        <span class="bar-label">HP</span>
+        <div class="bar"><div id="hp-fill" class="bar-fill hp-fill"></div></div>
+        <span id="hp-text" class="bar-text">56 / 56</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">体力</span>
+        <div class="bar"><div id="stamina-fill" class="bar-fill stamina-fill"></div></div>
+        <span id="stamina-text" class="bar-text">100</span>
+      </div>
+      <div id="move-speed" class="move-speed">移速 1.20 m/s</div>
+    </div>
+
+    <div class="hud-top-center">
+      <div id="timer" class="timer">00:00</div>
+      <div id="timer-caption" class="timer-caption">BOSS 将在 10:00 出现</div>
+      <div id="ruin-status" class="ruin-status hidden">遗迹共鸣 0.0 / 10s</div>
+      <div id="boss-bar" class="boss-bar hidden">
+        <div id="boss-name" class="boss-name">咒术师</div>
+        <div class="bar boss-hp"><div id="boss-fill" class="bar-fill boss-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="hud-top-right">
+      <div id="difficulty-badge" class="difficulty-badge">普通</div>
+      <div id="player-level" class="player-level">人物 Lv.1</div>
+      <div class="hud-exp-track"><div id="exp-fill" class="exp-fill"></div></div>
+      <div id="exp-text" class="exp-text">0 / 200 XP</div>
+      <div id="upgrade-ready" class="upgrade-ready hidden">升级待选</div>
+      <div id="kills" class="kills">击杀 0</div>
+      <div id="damage-total" class="damage-total">总伤 0</div>
+    </div>
+
+    <div id="weapon-bar" class="weapon-bar"></div>
+    <div id="relic-bar" class="relic-bar"></div>
+
+    <div id="hud-hint" class="hud-hint">W/A/S/D 移动 · Shift 奔跑 · 1/2/3 主动 · Esc 暂停</div>
+    <div id="run-toast" class="run-toast hidden" aria-live="polite"></div>
+  </div>
+
+  <div id="menu" class="overlay">
+    <div class="panel menu-panel">
+      <p class="eyebrow">SURVIVOR PROTOTYPE</p>
+      <h1 class="game-title">方形皿·测试版</h1>
+      <p class="subtitle">选择关卡与难度，存活10分钟并击败最终BOSS。</p>
+
+      <div class="profile-progress">
+        <div class="profile-progress-main">
+          <div class="profile-level-line">
+            <span class="profile-level-label">人物等级</span>
+            <strong class="profile-level">Lv.<span id="menu-player-level">1</span></strong>
+            <span id="menu-unlock-points" class="profile-unlock-points"></span>
+          </div>
+          <div class="exp-track menu-exp-track"><div id="menu-exp-fill" class="exp-fill"></div></div>
+          <span id="menu-exp-text" class="profile-exp-text">0 / 200 XP</span>
+        </div>
+        <button id="level-unlock-btn" class="mini-button hidden" type="button">选择新武器</button>
+      </div>
+
+      <div class="loadout">
+        <section>
+          <div class="loadout-head">
+            <h2>武器</h2>
+            <button id="weapon-select-btn" class="mini-button" type="button">选择 3 件</button>
+          </div>
+          <ul id="menu-weapons" class="loadout-list"></ul>
+        </section>
+        <section>
+          <div class="loadout-head">
+            <h2>圣物</h2>
+            <button id="relic-select-btn" class="mini-button" type="button">选择 3 件</button>
+          </div>
+          <ul id="menu-relics" class="loadout-list"></ul>
+        </section>
+      </div>
+
+      <section class="level-block">
+        <div class="section-label">关卡</div>
+        <div id="level-picker" class="level-picker" role="radiogroup" aria-label="关卡"></div>
+        <p id="level-desc" class="level-desc"></p>
+      </section>
+
+      <section class="difficulty-block">
+        <div class="section-label">难度</div>
+        <div id="difficulty-picker" class="difficulty-picker" role="radiogroup" aria-label="难度"></div>
+        <p id="difficulty-desc" class="difficulty-desc"></p>
+      </section>
+
+      <div class="menu-actions">
+        <button id="start-btn" class="primary" type="button">开始游戏</button>
+        <button id="codex-btn" type="button">图鉴</button>
+        <button id="inventory-btn" type="button">背包 / 商店</button>
+        <button id="help-btn" type="button">设置</button>
+        <button id="records-btn" type="button">游戏记录</button>
+      </div>
+
+      <p class="fineprint">本版包含第一、第二、第三大关各 10 种敌人、7 新手 + 10 进阶 + 10 老手 + 9 社区武器（共 36 种，出战选 3 种）和 34 种圣物（赛前选 3 种）；难度只影响敌人。</p>
+    </div>
+  </div>
+
+  <div id="weapon-select" class="overlay hidden">
+    <div class="panel weapon-select-panel">
+      <p class="eyebrow">LOADOUT</p>
+      <h2>选择 3 件出战武器</h2>
+      <p id="weapon-select-count" class="subtitle compact">已选 3 / 3</p>
+      <div id="weapon-select-grid" class="weapon-select-grid"></div>
+      <p id="weapon-select-hint" class="weapon-select-hint">点击武器卡选择或取消；必须选满 3 件。</p>
+      <div class="menu-actions">
+        <button id="weapon-random" type="button">随机 3 件</button>
+        <button id="weapon-select-confirm" class="primary" type="button">确认配置</button>
+        <button id="weapon-select-cancel" type="button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="relic-select" class="overlay hidden">
+    <div class="panel weapon-select-panel relic-select-panel">
+      <p class="eyebrow">RELICS</p>
+      <h2>选择出战圣物</h2>
+      <p id="relic-select-count" class="subtitle compact">已选 3 / 3</p>
+      <div id="relic-select-grid" class="relic-select-grid"></div>
+      <p id="relic-select-hint" class="weapon-select-hint">最多选择 3 件；冰晶体与墨鱼丸不能同时装备。</p>
+      <div class="menu-actions">
+        <button id="relic-random" type="button">随机 3 件</button>
+        <button id="relic-select-confirm" class="primary" type="button">确认配置</button>
+        <button id="relic-select-cancel" type="button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="level-unlock" class="overlay hidden">
+    <div class="panel weapon-select-panel">
+      <p class="eyebrow">LEVEL UP</p>
+      <h2>选择新武器</h2>
+      <p id="level-unlock-count" class="subtitle compact">可用升级额度 0</p>
+      <div id="level-unlock-grid" class="weapon-select-grid"></div>
+      <p id="level-unlock-hint" class="weapon-select-hint">选择一把尚未解锁的武器，解锁后永久生效。</p>
+      <div class="menu-actions">
+        <button id="level-unlock-confirm" class="primary" type="button" disabled>解锁</button>
+        <button id="level-unlock-cancel" type="button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="starter-select" class="overlay hidden">
+    <div class="panel weapon-select-panel">
+      <p class="eyebrow">NEW SAVE</p>
+      <h2>选择 3 件开局武器</h2>
+      <p id="starter-select-count" class="subtitle compact">已选 0 / 3</p>
+      <div id="starter-select-grid" class="weapon-select-grid"></div>
+      <p id="starter-select-hint" class="weapon-select-hint">必须正好选择 3 件新手武器。</p>
+      <div class="menu-actions">
+        <button id="starter-select-confirm" class="primary" type="button" disabled>确认开局</button>
+        <button id="starter-select-cancel" type="button">稍后选择</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="help" class="overlay hidden">
+    <div class="panel settings-panel">
+      <p class="eyebrow">SETTINGS</p>
+      <h2>设置</h2>
+      <div class="settings-grid">
+        <section class="settings-section">
+          <h3>按键</h3>
+          <div id="keybind-list" class="keybind-list"></div>
+          <button id="keybind-reset" class="mini-button" type="button">恢复默认按键</button>
+          <p class="help-note">点击按键后按下新的键；Esc 取消修改。</p>
+        </section>
+
+        <section class="settings-section">
+          <h3>画面</h3>
+          <div id="background-picker" class="background-picker"></div>
+          <label class="slider-row" for="brightness-slider">
+            <span>亮度</span>
+            <input id="brightness-slider" type="range" min="60" max="140" step="1" value="100">
+            <strong id="brightness-value">100%</strong>
+          </label>
+          <label class="slider-row" for="volume-slider">
+            <span>音量</span>
+            <input id="volume-slider" type="range" min="0" max="100" step="1" value="70">
+            <strong id="volume-value">70%</strong>
+          </label>
+          <p class="help-note">音量设置会保存，但当前版本还没有音频资源。</p>
+        </section>
+
+        <section class="settings-section">
+          <h3>存档</h3>
+          <div id="save-slot-list" class="save-slot-list"></div>
+          <p id="settings-hint" class="help-note">关卡结算、返回主菜单和修改设置后自动保存。</p>
+        </section>
+      </div>
+
+      <div class="menu-actions">
+        <button id="settings-records" type="button">游戏记录</button>
+        <button id="help-close" class="primary" type="button">保存并关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="records" class="overlay hidden">
+    <div class="panel records-panel">
+      <p class="eyebrow">RECORDS</p>
+      <h2>游戏记录</h2>
+      <p id="records-subtitle" class="subtitle compact">当前存档槽的历史对局</p>
+      <div id="records-list" class="records-list"></div>
+      <div class="menu-actions">
+        <button id="records-close" class="primary" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <div class="panel small-panel">
+      <p class="eyebrow">PAUSED</p>
+      <h2>已暂停</h2>
+      <div class="menu-actions vertical">
+        <button id="pause-resume" class="primary" type="button">继续</button>
+        <button id="pause-codex" type="button">图鉴</button>
+        <button id="pause-restart" type="button">重新开始</button>
+        <button id="pause-menu" type="button">返回主菜单</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="result" class="overlay hidden">
+    <div class="panel small-panel result-panel">
+      <p id="result-eyebrow" class="eyebrow">RESULT</p>
+      <h2 id="result-title">胜利</h2>
+      <p id="result-subtitle" class="subtitle"></p>
+      <div class="stats">
+        <div><span>存活时间</span><strong id="stat-time">0:00</strong></div>
+        <div><span>击杀</span><strong id="stat-kills">0</strong></div>
+        <div><span>造成伤害</span><strong id="stat-dealt">0</strong></div>
+        <div><span>受到伤害</span><strong id="stat-taken">0</strong></div>
+        <div><span>难度</span><strong id="stat-difficulty">普通</strong></div>
+        <div><span>关卡</span><strong id="stat-level">第一大关</strong></div>
+      </div>
+      <div id="result-damage" class="result-damage"></div>
+      <div class="menu-actions">
+        <button id="result-restart" class="primary" type="button">再来一次</button>
+        <button id="result-menu" type="button">返回主菜单</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inventory" class="overlay hidden">
+    <div class="panel inventory-panel">
+      <p class="eyebrow">STASH &amp; SHOP</p>
+      <h2>背包 / 社区商店</h2>
+      <div class="shop-summary">社区货币 <strong id="shop-currency">0</strong></div>
+      <div class="shop-layout">
+        <section class="shop-section">
+          <h3>社区商店</h3>
+          <div id="shop-list" class="shop-list"></div>
+        </section>
+        <section class="shop-section">
+          <h3>战利品背包</h3>
+          <div id="inventory-list" class="shop-list"></div>
+        </section>
+      </div>
+      <div class="menu-actions">
+        <button id="inventory-close" class="primary" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="save-delete-confirm" class="overlay hidden">
+    <div class="panel small-panel">
+      <p class="eyebrow">DELETE SAVE</p>
+      <h2>删除存档</h2>
+      <p id="save-delete-text" class="subtitle">确定要删除这个存档吗？此操作不可恢复。</p>
+      <div class="menu-actions">
+        <button id="save-delete-confirm-btn" class="danger-button" type="button">确认删除</button>
+        <button id="save-delete-cancel" class="primary" type="button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="codex" class="overlay hidden">
+    <div class="panel codex-panel">
+      <p class="eyebrow">CODEX</p>
+      <h2>图鉴</h2>
+      <div class="codex-tabs" role="tablist" aria-label="图鉴分类">
+        <button type="button" class="codex-tab is-active" data-codex-tab="weapons">武器</button>
+        <button type="button" class="codex-tab" data-codex-tab="relics">圣物</button>
+        <button type="button" class="codex-tab" data-codex-tab="enemies">敌方</button>
+      </div>
+      <div id="codex-content" class="codex-content"></div>
+      <div class="menu-actions">
+        <button id="codex-close" class="primary" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="debug" class="debug hidden"></div>
+
+  <script defer src="game.js"></script>
+</body>
+</html>
