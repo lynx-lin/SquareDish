@@ -6760,7 +6760,6 @@ const WEAPON_CODEX_TEXT = {
     weapon.targetId = target ? target.id : null;
     weapon.stacks = 0;
     weapon.timer = weapon.level >= 2 ? 0.4 : 0.5;
-    weapon.fishSide = Math.random() < 0.5 ? 'left' : 'right';
     if (target) applyEnemySlow(target, weapon.level >= 3 ? 0.65 : 0.75, 0.2);
   }
 
@@ -7959,7 +7958,7 @@ const WEAPON_CODEX_TEXT = {
     const count = weapon.level >= 3 ? 12 : 10;
     for (let i = 0; i < count; i += 1) {
       const angle = Math.random() * Math.PI * 2;
-      const distance = Math.sqrt(Math.random()) * 2.8;
+      const distance = 0.4 + Math.sqrt(Math.random()) * 2.4;
       const x = player.x + Math.cos(angle) * distance;
       const y = player.y + Math.sin(angle) * distance;
       if (x < 0 || x > WORLD.w || y < 0 || y > WORLD.h) continue;
@@ -15122,11 +15121,11 @@ const WEAPON_CODEX_TEXT = {
     ctx.restore();
   }
 
-  function drawMiniPiranha(ctx, x, y, flip, seed) {
+  function drawMiniPiranha(ctx, x, y, seed) {
     const bob = Math.sin(performance.now() / 220 + seed) * 0.03;
     ctx.save();
     ctx.translate(x, y + bob);
-    ctx.scale(flip ? -1 : 1, 1);
+
     ctx.fillStyle = '#ff6f86';
     ctx.strokeStyle = '#ffd0d6';
     ctx.lineWidth = 0.03;
@@ -15146,20 +15145,50 @@ const WEAPON_CODEX_TEXT = {
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(0.07, -0.02, 0.032, 0, Math.PI * 2);
+    ctx.moveTo(0.12, -0.082);
+    ctx.quadraticCurveTo(0.27, -0.065, 0.31, 0);
+    ctx.quadraticCurveTo(0.27, 0.065, 0.12, 0.082);
+    ctx.quadraticCurveTo(0.02, 0.045, 0.02, 0);
+    ctx.quadraticCurveTo(0.02, -0.045, 0.12, -0.082);
+    ctx.closePath();
+    ctx.fillStyle = '#48101d';
+    ctx.fill();
+    ctx.strokeStyle = '#ffb8c6';
+    ctx.lineWidth = 0.022;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(-0.035, -0.032, 0.032, 0, Math.PI * 2);
     ctx.fillStyle = '#fff8f4';
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(0.078, -0.02, 0.014, 0, Math.PI * 2);
+    ctx.arc(-0.027, -0.032, 0.014, 0, Math.PI * 2);
     ctx.fillStyle = '#251018';
     ctx.fill();
 
-    ctx.strokeStyle = '#fff1e8';
-    ctx.lineWidth = 0.018;
+    ctx.fillStyle = '#fff4e6';
+    for (let i = 0; i < 3; i += 1) {
+      const tx = 0.14 + i * 0.045;
+      const upperY = -0.058 + i * 0.014;
+      ctx.beginPath();
+      ctx.moveTo(tx, upperY);
+      ctx.lineTo(tx + 0.028, upperY);
+      ctx.lineTo(tx + 0.014, upperY + 0.034);
+      ctx.closePath();
+      ctx.fill();
+      const lowerY = 0.058 - i * 0.014;
+      ctx.beginPath();
+      ctx.moveTo(tx, lowerY);
+      ctx.lineTo(tx + 0.028, lowerY);
+      ctx.lineTo(tx + 0.014, lowerY - 0.034);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = 'rgba(255, 195, 208, 0.72)';
+    ctx.lineWidth = 0.02;
     ctx.beginPath();
-    ctx.moveTo(0.12, 0.035);
-    ctx.lineTo(0.16, 0.02);
-    ctx.lineTo(0.12, 0.005);
+    ctx.arc(-0.075, 0, 0.065, -0.9, 0.9);
     ctx.stroke();
     ctx.restore();
   }
@@ -15180,10 +15209,9 @@ const WEAPON_CODEX_TEXT = {
       ctx.lineTo(target.x, target.y);
       ctx.stroke();
 
-      const side = weapon.fishSide === 'right' ? 'right' : 'left';
-      const fishX = target.x + (side === 'left' ? -target.r * 0.85 : target.r * 0.85);
-      const fishY = target.y - target.r - 0.55;
-      drawMiniPiranha(ctx, fishX, fishY, side === 'right', target.id);
+      const barLeft = target.x - 0.45;
+      const barTop = target.y - target.r - 0.45;
+      drawMiniPiranha(ctx, barLeft - 0.22, barTop + 0.045, target.id);
     }
   }
 
