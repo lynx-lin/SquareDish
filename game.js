@@ -2259,7 +2259,8 @@ const WEAPON_CODEX_TEXT = {
       stickActive: false,
       stickX: 0,
       stickY: 0,
-      stickMagnitude: 0
+      stickMagnitude: 0,
+      stickRun: false
     },
     acc: 0,
     fps: 60,
@@ -4703,7 +4704,10 @@ const WEAPON_CODEX_TEXT = {
     state.input.stickX = 0;
     state.input.stickY = 0;
     state.input.stickMagnitude = 0;
-    if (ui.joystick) ui.joystick.classList.remove('is-active');
+    state.input.stickRun = false;
+    if (ui.joystick) {
+      ui.joystick.classList.remove('is-active', 'zone-inner', 'zone-middle', 'zone-outer');
+    }
     if (ui.joystickKnob) {
       ui.joystickKnob.style.transform = 'translate(-50%, -50%)';
     }
@@ -4716,7 +4720,9 @@ const WEAPON_CODEX_TEXT = {
     if (rect.width <= 0 || rect.height <= 0) return;
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    const maxDistance = rect.width * 0.32;
+    const innerRadius = rect.width * 0.19;
+    const middleRadius = rect.width * 0.285;
+    const maxDistance = rect.width * 0.38;
     let dx = event.clientX - centerX;
     let dy = event.clientY - centerY;
     const distance = Math.hypot(dx, dy);
@@ -4724,11 +4730,18 @@ const WEAPON_CODEX_TEXT = {
       dx = (dx / distance) * maxDistance;
       dy = (dy / distance) * maxDistance;
     }
-    const magnitude = Math.min(1, Math.hypot(dx, dy) / maxDistance);
+    const clampedDistance = Math.min(distance, maxDistance);
+    const magnitude = clampedDistance <= innerRadius
+      ? clamp(clampedDistance / innerRadius, 0, 1)
+      : 1;
     state.input.stickX = maxDistance > 0 ? dx / maxDistance : 0;
     state.input.stickY = maxDistance > 0 ? dy / maxDistance : 0;
     state.input.stickMagnitude = magnitude;
+    state.input.stickRun = distance > middleRadius;
     state.input.stickActive = magnitude > 0.12;
+    joystick.classList.toggle('zone-inner', distance > 0 && distance <= innerRadius);
+    joystick.classList.toggle('zone-middle', distance > innerRadius && distance <= middleRadius);
+    joystick.classList.toggle('zone-outer', distance > middleRadius);
     if (ui.joystickKnob) {
       ui.joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     }
@@ -5728,7 +5741,7 @@ const WEAPON_CODEX_TEXT = {
     player.undergroundSlowFactor = undergroundSlow;
 
     const running = moving
-      && (state.input.run || (stickActive && moveIntensity > 0.82))
+      && (state.input.run || (stickActive && state.input.stickRun))
       && player.stamina > 0;
     const baseSpeed = running
       ? player.runSpeed

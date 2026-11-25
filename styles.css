@@ -2287,18 +2287,54 @@ body {
   right: calc(14px + env(safe-area-inset-right, 0px));
 }
 
-.joystick-base {
+.joystick-zone {
   position: absolute;
-  inset: 18%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 1px dashed rgba(123, 213, 255, 0.18);
+  pointer-events: none;
+}
+
+.joystick-zone-outer {
+  width: 76%;
+  height: 76%;
+  border: 1px dashed rgba(255, 183, 92, 0.42);
+  background: rgba(255, 151, 53, 0.045);
+}
+
+.joystick-zone-middle {
+  width: 57%;
+  height: 57%;
+  border: 1px solid rgba(123, 213, 255, 0.34);
+  background: rgba(123, 213, 255, 0.055);
+}
+
+.joystick-zone-inner {
+  width: 38%;
+  height: 38%;
+  border: 1px solid rgba(123, 213, 255, 0.48);
+  background: radial-gradient(circle, rgba(123, 213, 255, 0.13), rgba(123, 213, 255, 0.025));
+}
+
+#hud.touch-mode .joystick.zone-inner .joystick-zone-inner {
+  border-color: rgba(190, 235, 255, 0.85);
+}
+
+#hud.touch-mode .joystick.zone-middle .joystick-zone-middle {
+  border-color: rgba(151, 229, 255, 0.85);
+}
+
+#hud.touch-mode .joystick.zone-outer .joystick-zone-outer {
+  border-color: rgba(255, 211, 121, 0.9);
+  background: rgba(255, 151, 53, 0.1);
 }
 
 .joystick-knob {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 42%;
+  width: 30%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border: 1px solid rgba(190, 235, 255, 0.65);
