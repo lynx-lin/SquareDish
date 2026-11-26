@@ -544,7 +544,7 @@
     shadowSpear: { category: '进阶', tags: ['穿透', '冲刺'], damage: ['物理','能量', '尖刺'], detail: '发射穿透幻影矛；主动短距离无敌冲刺；高熟练会给目标附加易伤。' },
     banana: { category: '进阶', tags: ['追踪', '体力'], damage: ['物理'], detail: '投掷追踪回旋镖，击中恢复体力；主动立即回复体力；回旋镖转向速度有限。' },
     fruitStaff: { category: '老手', tags: ['成长', '爆发'], damage: ['物理', '爆炸'], detail: '生长模式积攒营养和加速，结果模式散落果实并爆炸；主动切换模式，营养越高爆发越强。' },
-    focusGauntlet: { category: '老手', tags: ['单体', '专注'], damage: ['物理'], detail: '近身单体持续攻击，目标越单一伤害越高；熟练1可切换远距模式。' },
+    focusGauntlet: { category: '老手', tags: ['单体', '专注'], damage: ['物理'], detail: '近身单体持续攻击，目标越单一伤害越高；范围内敌人越多，单次伤害上限越低；切换目标或远近模式不重置当前伤害；熟练1可切换远距模式。' },
     iceWhisper: { category: '老手', tags: ['吟唱', '减速', '易伤'], damage: ['冰'], detail: '静止吟唱后释放环形冰波，造成冰冻、减速和易伤。' },
     evilEntangle: { category: '老手', tags: ['诅咒', '真伤'], damage: ['能量','真实','持续'], detail: '诅咒目标，使其按当前移速持续受到真实伤害。' },
     iceStandoff: { category: '老手', tags: ['吟唱', '锁定', '加速'], damage: ['冰'], detail: '吟唱后持续攻击范围内最高血量敌人，同时提高自身移速。' },
@@ -757,10 +757,10 @@ const WEAPON_CODEX_TEXT = {
   },
   "focusGauntlet": {
     "passive": "无。",
-    "auto": "对半径1.8米内最近的单体敌人造成每0.2秒12点初始物理伤害。当范围内只有1个敌人时，该伤害每秒+3，最多达到18，若范围内超过1个敌人立即恢复为初始伤害。目标死亡或范围内敌人数量变化时，伤害重置为初始值。",
+    "auto": "对半径1.8米内最近的单体敌人每0.2秒造成当前物理伤害。当前伤害从12开始，每秒+3，最多18；熟练3每0.5秒+3，最多27。范围内超过1个敌人时，每多1个敌人，单次伤害上限-3（最低1）；当前伤害超过上限时降为上限。切换目标或远近模式不重置当前伤害。",
     "active": "熟练1解锁",
     "levels": [
-      "主动释放：切换为远距模式，半径变为2.7米，切换时立刻恢复为初始伤害，切换冷却1秒。",
+      "主动释放：切换为远距模式，半径变为2.7米，切换冷却1秒，切换不重置当前伤害。",
       "攻击使得敌人减速50%，持续0.4s",
       "最高每次伤害可达到27。伤害增加间隔从每秒减少至每0.5秒"
     ]
@@ -2265,7 +2265,9 @@ const WEAPON_CODEX_TEXT = {
       stickX: 0,
       stickY: 0,
       stickMagnitude: 0,
-      stickRun: false
+      stickRun: false,
+      movementLock: false,
+      stationaryActions: 0
     },
     acc: 0,
     fps: 60,
@@ -4712,6 +4714,14 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function updateInputFromKeys() {
+    if (state.input.movementLock) {
+      state.input.up = false;
+      state.input.down = false;
+      state.input.left = false;
+      state.input.right = false;
+      state.input.run = false;
+      return;
+    }
     const keys = state.keys;
     state.input.up = keys.has(getBind('up'));
     state.input.down = keys.has(getBind('down'));
@@ -4721,6 +4731,8 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function resetInput() {
+    state.input.movementLock = false;
+    state.input.stationaryActions = 0;
     state.keys.clear();
     updateInputFromKeys();
     resetJoystick();
@@ -4803,6 +4815,10 @@ const WEAPON_CODEX_TEXT = {
       event.stopPropagation();
       joystickPointerId = event.pointerId;
       joystick.classList.add('is-active');
+      if (state.input.movementLock) {
+        state.input.movementLock = false;
+        state.input.stationaryActions = 0;
+      }
       try {
         joystick.setPointerCapture(event.pointerId);
       } catch {
@@ -4974,6 +4990,11 @@ const WEAPON_CODEX_TEXT = {
 
     if (isMovementCode(code) || code === getBind('run')) {
       event.preventDefault();
+      if (state.input.movementLock && isMovementCode(code)) {
+        if (event.repeat) return;
+        state.input.movementLock = false;
+        state.input.stationaryActions = 0;
+      }
       state.keys.add(code);
       updateInputFromKeys();
     }
@@ -5715,6 +5736,7 @@ const WEAPON_CODEX_TEXT = {
           lowNutritionCooldown: 0,
           rampTimer: 0,
           rampTargetId: null,
+          focusDamage: weapon.id === 'focusGauntlet' ? 12 : 0,
           channelTimer: 0,
           channelHp: 0,
           standoffTimer: 0,
@@ -5776,10 +5798,16 @@ const WEAPON_CODEX_TEXT = {
     const player = state.player;
     if (!player) return;
 
-    let moveX = (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
-    let moveY = (state.input.down ? 1 : 0) - (state.input.up ? 1 : 0);
+    let moveX = state.input.movementLock
+      ? 0
+      : (state.input.right ? 1 : 0) - (state.input.left ? 1 : 0);
+    let moveY = state.input.movementLock
+      ? 0
+      : (state.input.down ? 1 : 0) - (state.input.up ? 1 : 0);
     let moveIntensity = 1;
-    const stickActive = state.input.stickActive && state.input.stickMagnitude > 0.12;
+    const stickActive = !state.input.movementLock
+      && state.input.stickActive
+      && state.input.stickMagnitude > 0.12;
     if (stickActive) {
       moveX = state.input.stickX;
       moveY = state.input.stickY;
@@ -6567,7 +6595,8 @@ const WEAPON_CODEX_TEXT = {
         weapon.strongMode = !weapon.strongMode;
         break;
       case 'springTrap':
-        if (!isMovingInput() && weapon.placeTimer <= 0) {
+        if (weapon.placeTimer <= 0) {
+          beginStationaryAction();
           weapon.placeTimer = 1;
         }
         break;
@@ -6606,7 +6635,8 @@ const WEAPON_CODEX_TEXT = {
         state.player.experienceGrowth = weapon.growthMode;
         break;
       case 'lightningRod':
-        if (!isMovingInput() && !weapon.building) {
+        if (!weapon.building) {
+          beginStationaryAction();
           weapon.building = true;
           weapon.buildTimer = 2;
         }
@@ -6652,12 +6682,11 @@ const WEAPON_CODEX_TEXT = {
         if (weapon.switchCooldown <= 0) {
           weapon.farMode = !weapon.farMode;
           weapon.switchCooldown = 1;
-          weapon.rampTimer = 0;
-          weapon.rampTargetId = null;
         }
         break;
       case 'iceWhisper':
         if (weapon.channelTimer <= 0 && weapon.activeCooldown <= 0) {
+          beginStationaryAction();
           weapon.channelTimer = weapon.level >= 1 ? 1 : 1.2;
           weapon.channelHp = state.player.hp;
         }
@@ -6675,6 +6704,7 @@ const WEAPON_CODEX_TEXT = {
         break;
       case 'iceStandoff':
         if (weapon.channelTimer <= 0 && weapon.standoffTimer <= 0) {
+          beginStationaryAction();
           weapon.channelTimer = weapon.level >= 3 ? 0.7 : 1;
           weapon.channelHp = state.player.hp;
         }
@@ -6696,7 +6726,8 @@ const WEAPON_CODEX_TEXT = {
         activateCheatCode(weapon);
         break;
       case 'poisonSacBook':
-        if (weapon.channelTimer <= 0 && !isMovingInput()) {
+        if (weapon.channelTimer <= 0) {
+          beginStationaryAction();
           weapon.channelTimer = weapon.level >= 2 ? 1.5 : 2;
           weapon.channelHp = state.player.hp;
         }
@@ -6705,13 +6736,15 @@ const WEAPON_CODEX_TEXT = {
         if (weapon.level >= 2) cycleIceSpikeMode(weapon);
         break;
       case 'launcherBox':
-        if (weapon.channelTimer <= 0 && !weapon.building && !isMovingInput()) {
+        if (weapon.channelTimer <= 0 && !weapon.building) {
+          beginStationaryAction();
           weapon.building = true;
           weapon.buildTimer = 1.5;
         }
         break;
       case 'necroBook':
-        if (weapon.channelTimer <= 0 && !isMovingInput()) {
+        if (weapon.channelTimer <= 0) {
+          beginStationaryAction();
           weapon.channelTimer = 2;
           weapon.channelHp = state.player.hp;
         }
@@ -6766,7 +6799,27 @@ const WEAPON_CODEX_TEXT = {
     }
   }
 
+  function beginStationaryAction() {
+    if (menuDemo) {
+      clearMenuDemoInput();
+      return;
+    }
+    state.input.stationaryActions = (state.input.stationaryActions || 0) + 1;
+    state.input.movementLock = true;
+    updateInputFromKeys();
+  }
+
+  function endStationaryAction() {
+    const remaining = Math.max(0, (state.input.stationaryActions || 0) - 1);
+    state.input.stationaryActions = remaining;
+    if (remaining > 0) return;
+    if (!state.input.movementLock) return;
+    state.input.movementLock = false;
+    updateInputFromKeys();
+  }
+
   function isMovingInput() {
+    if (state.input.movementLock) return false;
     return state.input.up
       || state.input.down
       || state.input.left
@@ -6828,6 +6881,7 @@ const WEAPON_CODEX_TEXT = {
     if (weapon.placeTimer <= 0) return;
     if (isMovingInput()) {
       weapon.placeTimer = 0;
+      endStationaryAction();
       return;
     }
 
@@ -6835,6 +6889,7 @@ const WEAPON_CODEX_TEXT = {
     if (weapon.placeTimer <= 0) {
       weapon.placeTimer = 0;
       placeSpringTrap(weapon);
+      endStationaryAction();
     }
   }
 
@@ -7322,11 +7377,13 @@ const WEAPON_CODEX_TEXT = {
     if (weapon.prepTimer > 0) {
       if (moving) {
         weapon.prepTimer = 0;
+        endStationaryAction();
       } else {
         weapon.prepTimer -= dt;
         if (weapon.prepTimer <= 0) {
           weapon.prepTimer = 0;
           placeSpikeMine(weapon);
+          endStationaryAction();
         }
       }
     }
@@ -7340,7 +7397,8 @@ const WEAPON_CODEX_TEXT = {
       }
       return;
     }
-    if (!isMovingInput() && weapon.prepTimer <= 0) {
+    if (weapon.prepTimer <= 0) {
+      beginStationaryAction();
       weapon.prepTimer = weapon.level >= 1 ? 1.6 : 2;
     }
   }
@@ -7539,12 +7597,14 @@ const WEAPON_CODEX_TEXT = {
     if (isMovingInput()) {
       weapon.building = false;
       weapon.buildTimer = 0;
+      endStationaryAction();
       return;
     }
     weapon.buildTimer -= dt;
     if (weapon.buildTimer <= 0) {
       weapon.building = false;
       placeLightningRod(weapon);
+      endStationaryAction();
     }
   }
 
@@ -7948,13 +8008,20 @@ const WEAPON_CODEX_TEXT = {
     const inRange = state.enemies.filter((enemy) => (
       isEnemyTargetable(enemy) && dist2(player.x, player.y, enemy.x, enemy.y) <= radius * radius
     )).length;
+    const step = weapon.level >= 3 ? 0.5 : 1;
+    const maxDamage = weapon.level >= 3 ? 27 : 18;
+    const cap = Math.max(1, maxDamage - 3 * Math.max(0, inRange - 1));
+    if (!Number.isFinite(weapon.focusDamage)) weapon.focusDamage = 12;
 
-    if (!target || inRange !== 1 || weapon.rampTargetId !== target.id) {
-      weapon.rampTimer = 0;
-      weapon.rampTargetId = target ? target.id : null;
-    } else {
+    if (target && weapon.focusDamage < maxDamage) {
       weapon.rampTimer += dt;
+      if (weapon.rampTimer >= step) {
+        weapon.rampTimer -= step;
+        weapon.focusDamage = Math.min(maxDamage, weapon.focusDamage + 3);
+      }
     }
+    if (weapon.focusDamage > cap) weapon.focusDamage = cap;
+    if (weapon.focusDamage >= cap) weapon.rampTimer = 0;
 
     weapon.timer -= dt;
     if (weapon.timer > 0) return;
@@ -7963,10 +8030,7 @@ const WEAPON_CODEX_TEXT = {
       return;
     }
 
-    const step = weapon.level >= 3 ? 0.5 : 1;
-    const maxDamage = weapon.level >= 3 ? 27 : 18;
-    const damage = Math.min(maxDamage, 12 + 3 * Math.floor(weapon.rampTimer / step));
-    damageEnemy(target, damage, 'physical', false, 'focusGauntlet');
+    damageEnemy(target, weapon.focusDamage, 'physical', false, 'focusGauntlet');
     weapon.timer = 0.2;
   }
 
@@ -7978,6 +8042,7 @@ const WEAPON_CODEX_TEXT = {
     if (isMovingInput() || player.hp < weapon.channelHp) {
       weapon.channelTimer = 0;
       showChannelInterrupted();
+      endStationaryAction();
       return;
     }
 
@@ -8003,6 +8068,7 @@ const WEAPON_CODEX_TEXT = {
       dead: false
     });
     weapon.activeCooldown = 0.5;
+    endStationaryAction();
   }
 
   function curseEnemy(enemy, weapon) {
@@ -8039,12 +8105,14 @@ const WEAPON_CODEX_TEXT = {
       if (isMovingInput() || player.hp < weapon.channelHp) {
         weapon.channelTimer = 0;
         showChannelInterrupted();
+        endStationaryAction();
       } else {
         weapon.channelTimer -= dt;
         if (weapon.channelTimer <= 0) {
           weapon.standoffTimer = weapon.level >= 3 ? 6 : 5;
           weapon.standoffTick = 0;
           player.standoffSpeedTimer = weapon.standoffTimer;
+          endStationaryAction();
         }
       }
     }
@@ -8438,6 +8506,7 @@ const WEAPON_CODEX_TEXT = {
     if (isMovingInput() || player.hp < weapon.channelHp) {
       weapon.channelTimer = 0;
       showChannelInterrupted();
+      endStationaryAction();
       return;
     }
     weapon.channelTimer -= dt;
@@ -8453,6 +8522,7 @@ const WEAPON_CODEX_TEXT = {
       );
     }
     addDamageNumber(player.x, player.y - 0.8, '毒胞诞生', '#b6f28c');
+    endStationaryAction();
   }
 
   function spawnPoisonSac(x, y, level) {
@@ -8772,6 +8842,7 @@ const WEAPON_CODEX_TEXT = {
     if (isMovingInput()) {
       weapon.building = false;
       weapon.buildTimer = 0;
+      endStationaryAction();
       return;
     }
     weapon.buildTimer -= dt;
@@ -8779,6 +8850,7 @@ const WEAPON_CODEX_TEXT = {
       weapon.building = false;
       weapon.buildTimer = 0;
       placeLauncher(weapon);
+      endStationaryAction();
     }
   }
 
@@ -8897,6 +8969,7 @@ const WEAPON_CODEX_TEXT = {
     if (isMovingInput() || player.hp < weapon.channelHp) {
       weapon.channelTimer = 0;
       showChannelInterrupted();
+      endStationaryAction();
       return;
     }
     weapon.channelTimer -= dt;
@@ -8905,6 +8978,7 @@ const WEAPON_CODEX_TEXT = {
     const souls = weapon.souls;
     weapon.souls = 0;
     summonNecroGuard(weapon, souls);
+    endStationaryAction();
   }
 
   function summonNecroGuard(weapon, soulsUsed) {
@@ -9623,6 +9697,7 @@ const WEAPON_CODEX_TEXT = {
       weapon.building = false;
       weapon.buildTimer = 0;
       addDamageNumber(state.player.x, state.player.y - 0.8, '建造中断', '#8ea3c4');
+      endStationaryAction();
       return;
     }
     weapon.buildTimer -= dt;
@@ -9630,6 +9705,7 @@ const WEAPON_CODEX_TEXT = {
     weapon.building = false;
     weapon.buildTimer = 0;
     placeEnergyTower(weapon);
+    endStationaryAction();
   }
 
   function startEnergyTowerBuild(weapon) {
@@ -9638,10 +9714,7 @@ const WEAPON_CODEX_TEXT = {
       addDamageNumber(state.player.x, state.player.y - 0.8, '能量塔已满', '#8ea3c4');
       return;
     }
-    if (isMovingInput()) {
-      addDamageNumber(state.player.x, state.player.y - 0.8, '需静止建造', '#8ea3c4');
-      return;
-    }
+    beginStationaryAction();
     weapon.building = true;
     weapon.buildTimer = 3;
     addDamageNumber(state.player.x, state.player.y - 0.8, '建造能量塔', '#7bd5ff');
@@ -9808,14 +9881,9 @@ const WEAPON_CODEX_TEXT = {
 
     const homeX = player.x - 0.65;
     const homeY = player.y - 0.45;
-    const dx = homeX - vulture.x;
-    const dy = homeY - vulture.y;
-    const distance = Math.hypot(dx, dy);
-    if (distance > 0.1) {
-      const step = Math.min(distance, speed * dt);
-      vulture.x += (dx / distance) * step;
-      vulture.y += (dy / distance) * step;
-    }
+    const followRate = 1 - Math.exp(-20 * dt);
+    vulture.x += (homeX - vulture.x) * followRate;
+    vulture.y += (homeY - vulture.y) * followRate;
     vulture.attackTimer = 0.3;
   }
 
@@ -10024,6 +10092,7 @@ const WEAPON_CODEX_TEXT = {
         weapon.channelTimer = 0;
         weapon.activeCooldown = 1;
         showChannelInterrupted();
+        endStationaryAction();
       } else {
         weapon.channelTimer = Math.max(0, weapon.channelTimer - dt);
         if (weapon.channelTimer <= 0) {
@@ -10036,6 +10105,7 @@ const WEAPON_CODEX_TEXT = {
           weapon.activeCooldown = 1;
           addDamageNumber(player.x, player.y - 0.85, '墓碑已立', '#c9a7ff');
           showRunNotice('送葬人 · 墓碑已建造', '#c9a7ff', 2.5);
+          endStationaryAction();
         }
       }
     }
@@ -10058,10 +10128,7 @@ const WEAPON_CODEX_TEXT = {
       addDamageNumber(player.x, player.y - 0.85, '已有墓碑', '#c9a7ff');
       return;
     }
-    if (isMovingInput()) {
-      addDamageNumber(player.x, player.y - 0.85, '需静止吟唱', '#8ea3c4');
-      return;
-    }
+    beginStationaryAction();
     weapon.channelTimer = 2 + weapon.returnCount;
     weapon.channelHp = player.hp;
     addDamageNumber(player.x, player.y - 0.85, `立碑 ${weapon.channelTimer.toFixed(1)}s`, '#c9a7ff');
@@ -13608,9 +13675,7 @@ const WEAPON_CODEX_TEXT = {
         card.state.textContent = `${weapon.growMode ? '生长' : '结果'} ${Math.round(weapon.nutrition)}/${maxNutrition}`;
         card.state.className = 'weapon-state ready';
       } else if (weapon.id === 'focusGauntlet') {
-        const maxDamage = weapon.level >= 3 ? 27 : 18;
-        const step = weapon.level >= 3 ? 0.5 : 1;
-        const damage = Math.min(maxDamage, 12 + 3 * Math.floor(weapon.rampTimer / step));
+        const damage = Math.round(weapon.focusDamage || 12);
         card.state.textContent = `${weapon.farMode ? '远距' : '近身'} ${damage}`;
         card.state.className = 'weapon-state ready';
       } else if (weapon.id === 'iceWhisper') {
