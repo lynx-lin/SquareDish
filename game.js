@@ -544,7 +544,7 @@
     shadowSpear: { category: '进阶', tags: ['穿透', '冲刺'], damage: ['物理','能量', '尖刺'], detail: '发射穿透幻影矛；主动短距离无敌冲刺；高熟练会给目标附加易伤。' },
     banana: { category: '进阶', tags: ['追踪', '体力'], damage: ['物理'], detail: '投掷追踪回旋镖，击中恢复体力；主动立即回复体力；回旋镖转向速度有限。' },
     fruitStaff: { category: '老手', tags: ['成长', '爆发'], damage: ['物理', '爆炸'], detail: '生长模式积攒营养和加速，结果模式散落果实并爆炸；主动切换模式，营养越高爆发越强。' },
-    focusGauntlet: { category: '老手', tags: ['单体', '专注'], damage: ['物理'], detail: '近身单体持续攻击，目标越单一伤害越高；范围内敌人越多，单次伤害上限越低；切换目标或远近模式不重置当前伤害；熟练1可切换远距模式。' },
+    focusGauntlet: { category: '老手', tags: ['单体', '专注'], damage: ['物理'], detail: '近身单体持续攻击，目标越单一伤害越高；范围内敌人越多，单次伤害上限越低；切换目标或模式不重置当前伤害；熟练1可切换远距模式。' },
     iceWhisper: { category: '老手', tags: ['吟唱', '减速', '易伤'], damage: ['冰'], detail: '静止吟唱后释放环形冰波，造成冰冻、减速和易伤。' },
     evilEntangle: { category: '老手', tags: ['诅咒', '真伤'], damage: ['能量','真实','持续'], detail: '诅咒目标，使其按当前移速持续受到真实伤害。' },
     iceStandoff: { category: '老手', tags: ['吟唱', '锁定', '加速'], damage: ['冰'], detail: '吟唱后持续攻击范围内最高血量敌人，同时提高自身移速。' },
@@ -762,7 +762,7 @@ const WEAPON_CODEX_TEXT = {
     "levels": [
       "主动释放：切换为远距模式，半径变为2.7米，切换冷却1秒，切换不重置当前伤害。",
       "攻击使得敌人减速50%，持续0.4s",
-      "最高每次伤害可达到27。伤害增加间隔从每秒减少至每0.5秒"
+      "最高每次伤害可达到24。伤害增加间隔从每秒减少至每0.5秒"
     ]
   },
   "iceWhisper": {
@@ -5737,6 +5737,11 @@ const WEAPON_CODEX_TEXT = {
           rampTimer: 0,
           rampTargetId: null,
           focusDamage: weapon.id === 'focusGauntlet' ? 12 : 0,
+          punchPulse: 0,
+          punchSide: 1,
+          punchX: 0,
+          punchY: 0,
+          punchAngle: 0,
           channelTimer: 0,
           channelHp: 0,
           standoffTimer: 0,
@@ -8003,14 +8008,15 @@ const WEAPON_CODEX_TEXT = {
   function updateFocusGauntletWeapon(weapon, dt) {
     const player = state.player;
     weapon.switchCooldown = Math.max(0, weapon.switchCooldown - dt);
+    weapon.punchPulse = Math.max(0, (weapon.punchPulse || 0) - dt);
     const radius = weapon.farMode ? 2.7 : 1.8;
     const target = nearestEnemy(player.x, player.y, radius);
     const inRange = state.enemies.filter((enemy) => (
       isEnemyTargetable(enemy) && dist2(player.x, player.y, enemy.x, enemy.y) <= radius * radius
     )).length;
     const step = weapon.level >= 3 ? 0.5 : 1;
-    const maxDamage = weapon.level >= 3 ? 27 : 18;
-    const cap = Math.max(1, maxDamage - 3 * Math.max(0, inRange - 1));
+    const maxDamage = weapon.level >= 3 ? 24 : 18;
+    const cap = Math.max(12, maxDamage - 3 * Math.max(0, inRange - 1));
     if (!Number.isFinite(weapon.focusDamage)) weapon.focusDamage = 12;
 
     if (target && weapon.focusDamage < maxDamage) {
@@ -8029,6 +8035,21 @@ const WEAPON_CODEX_TEXT = {
       weapon.timer = 0.1;
       return;
     }
+
+    const dx = target.x - player.x;
+    const dy = target.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    const angle = Math.atan2(dy, dx);
+    const punchDistance = Math.max(0.12, distance - 0.3);
+    const rightX = -Math.sin(angle);
+    const rightY = Math.cos(angle);
+    weapon.punchSide = (weapon.punchSide || 1) === 1 ? -1 : 1;
+    weapon.punchX = player.x + Math.cos(angle) * punchDistance
+      + rightX * weapon.punchSide * 0.2;
+    weapon.punchY = player.y + Math.sin(angle) * punchDistance
+      + rightY * weapon.punchSide * 0.2;
+    weapon.punchAngle = angle;
+    weapon.punchPulse = 0.18;
 
     damageEnemy(target, weapon.focusDamage, 'physical', false, 'focusGauntlet');
     weapon.timer = 0.2;
@@ -14032,6 +14053,7 @@ const WEAPON_CODEX_TEXT = {
     drawBombs(ctx);
     drawCart(ctx);
     drawEnemies(ctx);
+    drawFocusGauntletPunches(ctx);
     drawGrenades(ctx);
     drawUndeadGuard(ctx);
     drawCheatMarkers(ctx);
@@ -15538,6 +15560,89 @@ const WEAPON_CODEX_TEXT = {
     }
 
     ctx.restore();
+  }
+
+  function drawFocusGauntletPunches(ctx) {
+    const player = state.player;
+    if (!player) return;
+
+    for (const weapon of player.weapons) {
+      if (weapon.id !== 'focusGauntlet' || !(weapon.punchPulse > 0)) continue;
+      const alpha = clamp(weapon.punchPulse / 0.18, 0, 1);
+      if (alpha <= 0) continue;
+
+      ctx.save();
+      ctx.translate(weapon.punchX, weapon.punchY);
+      ctx.rotate(weapon.punchAngle);
+      ctx.scale(1.18 + alpha * 0.1, (weapon.punchSide || 1) * (1.18 + alpha * 0.1));
+      ctx.globalAlpha = alpha;
+
+      // 命中冲击环，不连接到玩家。
+      ctx.strokeStyle = `rgba(255, 218, 138, ${0.8 * alpha})`;
+      ctx.lineWidth = 0.026;
+      ctx.beginPath();
+      ctx.arc(0.04, 0, 0.15 + (1 - alpha) * 0.1, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(255, 248, 210, ${0.45 * alpha})`;
+      ctx.beginPath();
+      ctx.arc(0.04, 0, 0.08, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 护腕。
+      ctx.fillStyle = '#743a23';
+      ctx.strokeStyle = '#e19a5a';
+      ctx.lineWidth = 0.018;
+      ctx.beginPath();
+      ctx.rect(-0.22, -0.075, 0.11, 0.15);
+      ctx.fill();
+      ctx.stroke();
+
+      // 拳套主体。
+      ctx.fillStyle = '#ffc45f';
+      ctx.strokeStyle = '#fff0c0';
+      ctx.lineWidth = 0.022;
+      ctx.beginPath();
+      ctx.ellipse(-0.025, 0, 0.15, 0.11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // 指节。
+      ctx.fillStyle = '#ffe08a';
+      ctx.strokeStyle = '#9a4e2a';
+      ctx.lineWidth = 0.012;
+      for (let i = 0; i < 3; i += 1) {
+        ctx.beginPath();
+        ctx.arc(0.1, -0.058 + i * 0.058, 0.028, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // 拇指。
+      ctx.fillStyle = '#e6a54f';
+      ctx.beginPath();
+      ctx.ellipse(-0.045, 0.1, 0.062, 0.04, 0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#9a4e2a';
+      ctx.lineWidth = 0.012;
+      ctx.stroke();
+
+      // 高光和指缝。
+      ctx.strokeStyle = 'rgba(255, 250, 220, 0.9)';
+      ctx.lineWidth = 0.016;
+      ctx.beginPath();
+      ctx.arc(-0.035, -0.01, 0.095, -2.35, -1.15);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(116, 58, 35, 0.55)';
+      ctx.lineWidth = 0.01;
+      for (let i = 0; i < 2; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(0.04, -0.04 + i * 0.047);
+        ctx.lineTo(0.04, 0.022 + i * 0.025);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
   }
 
   function drawPiranhaLinks(ctx) {
