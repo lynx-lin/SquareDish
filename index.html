@@ -125,6 +125,7 @@
         <button id="codex-btn" type="button">图鉴</button>
         <button id="inventory-btn" type="button">背包 / 商店</button>
         <button id="help-btn" type="button">设置</button>
+        <button id="guide-btn" type="button">游戏说明</button>
         <button id="records-btn" type="button">游戏记录</button>
       </div>
 
@@ -246,6 +247,40 @@
       <div id="records-list" class="records-list"></div>
       <div class="menu-actions">
         <button id="records-close" class="primary" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="guide" class="overlay hidden">
+    <div class="panel guide-panel">
+      <p class="eyebrow">GUIDE</p>
+      <h2>游戏说明</h2>
+      <div class="guide-content">
+        <section class="guide-section">
+          <h3>游戏目标</h3>
+          <p>选择关卡与难度后进入对局。撑过 10 分钟并击败最终 BOSS 即可通关；生命归零则失败。</p>
+        </section>
+        <section class="guide-section">
+          <h3>基本操作</h3>
+          <p>键盘：WASD 移动，Shift 奔跑，1 / 2 / 3 释放武器主动技能，Esc 暂停。手机：使用虚拟摇杆移动（可在设置中切换左右），点按或长按武器卡释放主动技能，底部中央按钮暂停。</p>
+        </section>
+        <section class="guide-section">
+          <h3>战前准备</h3>
+          <p>每局携带 3 件武器和最多 3 件圣物。新存档需要先从 7 件新手武器中选择 3 件作为开局武器。</p>
+        </section>
+        <section class="guide-section">
+          <h3>局内成长</h3>
+          <p>击杀敌人可获得人物经验和战利品，击杀与存活时间都会积累武器熟练度。人物升级会获得武器解锁额度；熟练度达到 300 / 700 / 1200 后分别开放 1 / 2 / 3 级效果。</p>
+        </section>
+        <section class="guide-section">
+          <h3>解锁与存档</h3>
+          <p>社区武器在社区商店购买，熔炼武器在制造台合成。游戏有 3 个独立存档槽，等级、解锁、设置和游戏记录会自动保存。</p>
+        </section>
+        <!-- 后续说明条目从这里继续追加。 -->
+      </div>
+      <p class="help-note guide-footer">更多武器、圣物和敌人的详细机制可在图鉴中查看。</p>
+      <div class="menu-actions">
+        <button id="guide-close" class="primary" type="button">关闭</button>
       </div>
     </div>
   </div>

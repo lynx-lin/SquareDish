@@ -2088,6 +2088,7 @@ const WEAPON_CODEX_TEXT = {
     records: $('records'),
     recordsList: $('records-list'),
     recordsSubtitle: $('records-subtitle'),
+    guide: $('guide'),
     inventory: $('inventory'),
     shopCurrency: $('shop-currency'),
     shopList: $('shop-list'),
@@ -3021,6 +3022,16 @@ const WEAPON_CODEX_TEXT = {
 
   function hideRecords() {
     setHidden(ui.records, true);
+    maybeOpenStarterSelection();
+  }
+
+  function showGuide() {
+    if (state.mode !== 'menu') return;
+    setHidden(ui.guide, false);
+  }
+
+  function hideGuide() {
+    setHidden(ui.guide, true);
     maybeOpenStarterSelection();
   }
 
@@ -4121,7 +4132,7 @@ const WEAPON_CODEX_TEXT = {
   function maybeOpenStarterSelection() {
     if (state.mode !== 'menu' || state.progress.starterSelected) return;
     if (!ui.starterSelect || !ui.starterSelect.classList.contains('hidden')) return;
-    const blockingOverlays = [ui.help, ui.inventory, ui.crafting, ui.codex, ui.records, ui.saveDeleteConfirm, ui.weaponSelect, ui.relicSelect, ui.levelUnlock];
+    const blockingOverlays = [ui.help, ui.inventory, ui.crafting, ui.codex, ui.records, ui.guide, ui.saveDeleteConfirm, ui.weaponSelect, ui.relicSelect, ui.levelUnlock];
     if (blockingOverlays.some((overlay) => overlay && !overlay.classList.contains('hidden'))) return;
     openStarterSelect();
   }
@@ -4613,6 +4624,8 @@ const WEAPON_CODEX_TEXT = {
     $('records-btn').addEventListener('click', showRecords);
     $('settings-records').addEventListener('click', showRecords);
     $('records-close').addEventListener('click', hideRecords);
+    $('guide-btn').addEventListener('click', showGuide);
+    $('guide-close').addEventListener('click', hideGuide);
     $('inventory-btn').addEventListener('click', showInventory);
     $('inventory-close').addEventListener('click', hideInventory);
     $('crafting-open').addEventListener('click', showCrafting);
@@ -4831,6 +4844,14 @@ const WEAPON_CODEX_TEXT = {
     if (state.rebindingAction) {
       event.preventDefault();
       applyRebind(code);
+      return;
+    }
+
+    if (!ui.guide.classList.contains('hidden')) {
+      if (code === 'Escape') {
+        event.preventDefault();
+        hideGuide();
+      }
       return;
     }
 
@@ -5055,6 +5076,7 @@ const WEAPON_CODEX_TEXT = {
     setHidden(ui.weaponSelect, true);
     setHidden(ui.help, true);
     setHidden(ui.records, true);
+    setHidden(ui.guide, true);
     setHidden(ui.inventory, true);
     setHidden(ui.crafting, true);
     setHidden(ui.saveDeleteConfirm, true);
@@ -5143,6 +5165,7 @@ const WEAPON_CODEX_TEXT = {
     setHidden(ui.weaponSelect, true);
     setHidden(ui.help, true);
     setHidden(ui.records, true);
+    setHidden(ui.guide, true);
     setHidden(ui.inventory, true);
     setHidden(ui.crafting, true);
     setHidden(ui.saveDeleteConfirm, true);
@@ -5196,6 +5219,7 @@ const WEAPON_CODEX_TEXT = {
       ui.crafting,
       ui.codex,
       ui.records,
+      ui.guide,
       ui.weaponSelect,
       ui.relicSelect,
       ui.saveDeleteConfirm,

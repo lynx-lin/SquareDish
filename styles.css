@@ -1417,6 +1417,67 @@ kbd {
   margin: 4px 0 8px;
 }
 
+.guide-panel {
+  width: min(800px, 100%);
+}
+
+.guide-panel h2 {
+  margin: 4px 0 8px;
+}
+
+.guide-content {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+
+.guide-section {
+  padding: 13px 15px;
+  border: 1px solid rgba(140, 178, 255, 0.13);
+  border-radius: 13px;
+  background: rgba(6, 11, 22, 0.45);
+}
+
+.guide-section h3 {
+  margin: 0 0 6px;
+  color: #9bdcff;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+
+.guide-section p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.guide-section ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.guide-section li + li {
+  margin-top: 4px;
+}
+
+.guide-footer {
+  margin: 14px 0 18px;
+}
+
+@media (max-width: 640px) {
+  .guide-section {
+    padding: 11px 12px;
+  }
+
+  .guide-section h3 {
+    font-size: 13px;
+  }
+}
+
 .records-list {
   display: grid;
   gap: 8px;
