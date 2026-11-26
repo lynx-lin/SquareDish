@@ -15484,6 +15484,13 @@ const WEAPON_CODEX_TEXT = {
       const target = state.enemies.find((enemy) => enemy.id === weapon.targetId && !enemy.dead);
       if (!target) continue;
 
+      ctx.strokeStyle = `rgba(255, 104, 128, ${0.4 + weapon.stacks * 0.04})`;
+      ctx.lineWidth = 0.08 + weapon.stacks * 0.01;
+      ctx.beginPath();
+      ctx.moveTo(player.x, player.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.stroke();
+
       const barLeft = target.x - 0.45;
       const barTop = target.y - target.r - 0.45;
       const scale = 1.25 + Math.min(0.2, weapon.stacks * 0.02);
