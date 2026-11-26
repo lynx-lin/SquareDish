@@ -532,7 +532,7 @@
     springTrap: { category: '新手', tags: ['陷阱', '控制', '减速'], damage: ['物理'], detail: '被动移速+20%；静止1秒布置弹簧陷阱，踩中的敌人被弹飞并在落地时受伤；熟练提升触发次数、数量、伤害、击退和减速。' },
     piranha: { category: '新手', tags: ['锁定', '持续', '减速'], damage: ['物理'], detail: '锁定近处最高血量敌人并持续减速；周期性撕咬，咬痕会提高后续伤害；高熟练缩短撕咬间隔并强化主动咬痕/减速。' },
     immortalSword: { category: '新手', tags: ['近战', '蓄力', '剑气'], damage: ['物理'], detail: '近身周期斩击；脱战后蓄力，敌人靠近时释放无限穿透剑气；1级静养回血，2/3级缩短蓄力时间，3级增强击退。' },
-    musicBomb: { category: '新手', tags: ['召唤', '嘲讽', '爆炸'], damage: ['物理', '爆炸'], detail: '定时获得音乐炸弹，最多同时放置4颗；放置后吸引敌人，被摧毁时范围爆炸；熟练2提高至5颗。' },
+    musicBomb: { category: '新手', tags: ['召唤', '嘲讽', '爆炸'], damage: ['物理', '爆炸'], detail: '定时获得音乐炸弹，最多存储2颗，场上最多同时存在4颗；放置后吸引敌人，被摧毁时爆炸，放置第5颗时最早放置的炸弹立即引爆；熟练2提高场上上限至5颗。' },
     thermalGun: { category: '进阶', tags: ['充能', '射线', '自伤'], damage: ['能量'], detail: '持续积攒热量，主动消耗热量发射射线；满热会自伤，1级后改为加速，射线伤害随热量提高。' },
     spikeMine: { category: '进阶', tags: ['陷阱', '尖刺', '爆炸'], damage: ['物理', '尖刺', '真实', '爆炸'], detail: '静止布置地雷；踩中后根据剩余尖刺值造成真伤并爆炸；2级获得备用雷与主动放置能力。' },
     gravityBook: { category: '进阶', tags: ['区域', '减速', '聚怪'], damage: ['能量', '真实'], detail: '自动生成重力场，造成能量真伤并减速；熟练2会吸引非精英敌人，精英免疫吸引；熟练1解锁高速模式，随机锁定7.2米内敌人并快速生成重力场；熟练3扩大范围。' },
@@ -636,13 +636,13 @@ const WEAPON_CODEX_TEXT = {
     ]
   },
   "musicBomb": {
-    "passive": "每5.6秒获得1颗音乐炸弹（陷阱），最多存储4颗，场上最多同时存在4颗，达上限时不启用冷却。",
+    "passive": "每5.6秒获得1颗音乐炸弹（陷阱），最多存储2颗，场上最多同时存在4颗，超出时最早放置的炸弹立即引爆，达上限时不启用冷却。",
     "auto": "无。",
     "active": "原地放置1颗音乐炸弹。音乐炸弹生命值25，非BOSS的敌方会将音乐炸弹视为玩家，被敌方摧毁时造成半径4米的64-32点物理爆炸伤害，该伤害随距离线性递降。",
     "levels": [
       "音乐炸弹的冷却降低至4.8秒。",
-      "音乐炸弹的音乐种类更多了。伤害增加至80-40，存储和场上上限提高至5颗。",
-      "玩家入场或复活时立即获得2颗音乐炸弹。"
+      "音乐炸弹的音乐种类更多了。伤害增加至80-40，场上同时存在上限提高至5颗。",
+      "音乐炸弹存储上限+1，玩家入场或复活时立即获得2颗音乐炸弹。"
     ]
   },
   "thermalGun": {
@@ -6957,12 +6957,16 @@ const WEAPON_CODEX_TEXT = {
     }
   }
 
-  function getMusicBombMax(level) {
+  function getMusicBombStorageMax(level) {
+    return level >= 3 ? 3 : 2;
+  }
+
+  function getMusicBombFieldMax(level) {
     return level >= 2 ? 5 : 4;
   }
 
   function updateMusicBombWeapon(weapon, dt) {
-    const maxBombs = getMusicBombMax(weapon.level);
+    const maxBombs = getMusicBombStorageMax(weapon.level);
     if (weapon.bombs >= maxBombs) {
       weapon.bombTimer = 0;
       return;
@@ -7202,9 +7206,13 @@ const WEAPON_CODEX_TEXT = {
 
   function placeMusicBomb(weapon) {
     const player = state.player;
-    const maxBombs = getMusicBombMax(weapon.level);
+    const storageMax = getMusicBombStorageMax(weapon.level);
+    const fieldMax = getMusicBombFieldMax(weapon.level);
     if (!player || weapon.bombs <= 0) return;
-    if (state.bombs.filter((bomb) => !bomb.dead).length >= maxBombs) return;
+    const fieldBombs = state.bombs.filter((bomb) => !bomb.dead);
+    if (fieldBombs.length >= fieldMax) {
+      explodeBomb(fieldBombs[0]);
+    }
 
     weapon.bombs -= 1;
     state.bombs.push({
@@ -7220,7 +7228,7 @@ const WEAPON_CODEX_TEXT = {
       dead: false
     });
 
-    if (weapon.bombs < maxBombs && weapon.bombTimer <= 0) {
+    if (weapon.bombs < storageMax && weapon.bombTimer <= 0) {
       weapon.bombTimer = weapon.level >= 1 ? 4.8 : 5.6;
     }
   }
@@ -10578,6 +10586,15 @@ const WEAPON_CODEX_TEXT = {
       const damage = bomb.damageMax - (bomb.damageMax - bomb.damageMin) * falloff;
       damageEnemy(enemy, damage, 'physical', false, 'musicBomb', { explosion: true });
     }
+    addEffect({
+      kind: 'ring',
+      x: bomb.x,
+      y: bomb.y,
+      r: 4,
+      life: 0.25,
+      maxLife: 0.25,
+      color: '#ff8fa3'
+    });
   }
 
   function selectEnemyTarget(enemy) {
@@ -13528,7 +13545,7 @@ const WEAPON_CODEX_TEXT = {
           card.state.className = 'weapon-state ready';
         }
       } else if (weapon.id === 'musicBomb') {
-        const maxBombs = getMusicBombMax(weapon.level);
+        const maxBombs = getMusicBombStorageMax(weapon.level);
         card.state.textContent = `炸弹 ${weapon.bombs}/${maxBombs}`;
         card.state.className = 'weapon-state ready';
       } else if (weapon.id === 'thermalGun') {
@@ -15323,105 +15340,138 @@ const WEAPON_CODEX_TEXT = {
     const bob = Math.sin(now / 220 + seed) * 0.025;
     const bite = clamp(bitePulse / 0.22, 0, 1);
     const chomp = 0.5 + 0.5 * Math.sin(now / 90 + seed * 1.7);
-    const mouthOpen = 0.018 + (1 - bite) * (0.018 + chomp * 0.018);
+    const mouthOpen = 0.012 + (1 - bite) * (0.008 + chomp * 0.008);
     ctx.save();
     ctx.translate(x, y + bob);
     ctx.scale(scale, scale);
 
-    ctx.fillStyle = '#ff6f86';
-    ctx.strokeStyle = '#ffd0d6';
-    ctx.lineWidth = 0.03;
+    // 宽厚的食人鱼身体。
+    ctx.fillStyle = '#d94a5f';
+    ctx.strokeStyle = '#ffc0b8';
+    ctx.lineWidth = 0.025;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 0.17, 0.09, 0, 0, Math.PI * 2);
+    ctx.ellipse(-0.02, 0, 0.18, 0.13, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
+    ctx.fillStyle = 'rgba(255, 137, 118, 0.72)';
     ctx.beginPath();
-    ctx.moveTo(-0.14, -0.05);
-    ctx.lineTo(-0.3, -0.13);
-    ctx.lineTo(-0.27, 0);
-    ctx.lineTo(-0.3, 0.13);
-    ctx.lineTo(-0.14, 0.05);
+    ctx.ellipse(-0.01, 0.045, 0.14, 0.07, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 背鳍、臀鳍和胸鳍。
+    ctx.fillStyle = '#b8324c';
+    ctx.beginPath();
+    ctx.moveTo(-0.13, -0.1);
+    ctx.lineTo(-0.04, -0.23);
+    ctx.lineTo(0.04, -0.1);
     ctx.closePath();
-    ctx.fillStyle = '#e94f70';
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(0.1, -0.075);
-    ctx.quadraticCurveTo(0.24, -0.07, 0.34, -mouthOpen);
-    ctx.quadraticCurveTo(0.22, -0.012, 0.1, -0.02);
+    ctx.moveTo(-0.1, 0.1);
+    ctx.lineTo(-0.02, 0.2);
+    ctx.lineTo(0.04, 0.1);
     ctx.closePath();
-    ctx.fillStyle = '#48101d';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0.02, 0.06);
+    ctx.lineTo(-0.04, 0.16);
+    ctx.lineTo(0.1, 0.1);
+    ctx.closePath();
+    ctx.fill();
+
+    // 尾鳍。
+    ctx.beginPath();
+    ctx.moveTo(-0.18, -0.045);
+    ctx.lineTo(-0.32, -0.12);
+    ctx.lineTo(-0.29, 0);
+    ctx.lineTo(-0.32, 0.12);
+    ctx.lineTo(-0.18, 0.045);
+    ctx.closePath();
+    ctx.fillStyle = '#c43c56';
+    ctx.fill();
+
+    // 小而短的嘴。
+    ctx.beginPath();
+    ctx.moveTo(0.1, -0.07);
+    ctx.quadraticCurveTo(0.19, -0.062, 0.24, -mouthOpen);
+    ctx.quadraticCurveTo(0.18, -0.015, 0.1, -0.02);
+    ctx.closePath();
+    ctx.fillStyle = '#4a101c';
     ctx.fill();
     ctx.strokeStyle = '#ffb8c6';
-    ctx.lineWidth = 0.022;
+    ctx.lineWidth = 0.018;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(0.1, 0.075);
-    ctx.quadraticCurveTo(0.24, 0.07, 0.34, mouthOpen);
-    ctx.quadraticCurveTo(0.22, 0.012, 0.1, 0.02);
+    ctx.moveTo(0.1, 0.07);
+    ctx.quadraticCurveTo(0.19, 0.062, 0.24, mouthOpen);
+    ctx.quadraticCurveTo(0.18, 0.015, 0.1, 0.02);
     ctx.closePath();
-    ctx.fillStyle = '#48101d';
+    ctx.fillStyle = '#4a101c';
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = '#fff4e6';
     for (let i = 0; i < 3; i += 1) {
-      const toothX = 0.14 + i * 0.055;
-      const upperY = -0.075 + (toothX - 0.1) / 0.24 * (0.075 - mouthOpen);
+      const toothX = 0.13 + i * 0.032;
+      const upperY = -0.062 + (toothX - 0.1) / 0.14 * (0.062 - mouthOpen);
       ctx.beginPath();
       ctx.moveTo(toothX, upperY);
-      ctx.lineTo(toothX + 0.028, upperY);
-      ctx.lineTo(toothX + 0.014, upperY + 0.032);
+      ctx.lineTo(toothX + 0.018, upperY);
+      ctx.lineTo(toothX + 0.009, upperY + 0.02);
       ctx.closePath();
       ctx.fill();
 
-      const lowerY = 0.075 - (toothX - 0.1) / 0.24 * (0.075 - mouthOpen);
+      const lowerY = 0.062 - (toothX - 0.1) / 0.14 * (0.062 - mouthOpen);
       ctx.beginPath();
       ctx.moveTo(toothX, lowerY);
-      ctx.lineTo(toothX + 0.028, lowerY);
-      ctx.lineTo(toothX + 0.014, lowerY - 0.032);
+      ctx.lineTo(toothX + 0.018, lowerY);
+      ctx.lineTo(toothX + 0.009, lowerY - 0.02);
       ctx.closePath();
       ctx.fill();
     }
 
+    // 眼睛和鳃线。
     ctx.beginPath();
-    ctx.arc(-0.035, -0.032, 0.032, 0, Math.PI * 2);
+    ctx.arc(0.045, -0.042, 0.035, 0, Math.PI * 2);
     ctx.fillStyle = '#fff8f4';
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(-0.027, -0.032, 0.014, 0, Math.PI * 2);
+    ctx.arc(0.055, -0.042, 0.015, 0, Math.PI * 2);
     ctx.fillStyle = '#251018';
     ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 195, 208, 0.62)';
+    ctx.lineWidth = 0.018;
+    ctx.beginPath();
+    ctx.arc(0.055, 0, 0.07, -1.05, 1.05);
+    ctx.stroke();
 
     if (bite > 0.01) {
       ctx.fillStyle = `rgba(255, 92, 118, ${0.85 * bite})`;
       ctx.beginPath();
-      ctx.arc(0.31, 0, 0.04, 0, Math.PI * 2);
+      ctx.arc(0.23, 0, 0.03, 0, Math.PI * 2);
       ctx.fill();
       for (let i = 0; i < 4; i += 1) {
         const t = (now / 220 + i * 0.27 + seed * 0.11) % 1;
-        const px = 0.44 - t * 0.1;
-        const py = (i - 1.5) * 0.024 + Math.sin(t * 6 + i) * 0.012;
+        const px = 0.36 - t * 0.12;
+        const py = (i - 1.5) * 0.022 + Math.sin(t * 6 + i) * 0.01;
         ctx.globalAlpha = (1 - t) * bite;
         ctx.beginPath();
-        ctx.arc(px, py, 0.017 * (1 - t * 0.5), 0, Math.PI * 2);
+        ctx.arc(px, py, 0.015 * (1 - t * 0.5), 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
       ctx.strokeStyle = `rgba(255, 80, 105, ${0.5 * bite})`;
-      ctx.lineWidth = 0.018;
+      ctx.lineWidth = 0.016;
       ctx.beginPath();
-      ctx.arc(0.32, 0, 0.06 + 0.03 * (1 - bite), 0, Math.PI * 2);
+      ctx.arc(0.24, 0, 0.045 + 0.025 * (1 - bite), 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    ctx.strokeStyle = 'rgba(255, 195, 208, 0.72)';
-    ctx.lineWidth = 0.02;
-    ctx.beginPath();
-    ctx.arc(-0.075, 0, 0.065, -0.9, 0.9);
-    ctx.stroke();
     ctx.restore();
   }
 
@@ -15436,10 +15486,10 @@ const WEAPON_CODEX_TEXT = {
 
       const barLeft = target.x - 0.45;
       const barTop = target.y - target.r - 0.45;
-      const scale = 1.3 + Math.min(0.25, weapon.stacks * 0.02);
+      const scale = 1.25 + Math.min(0.2, weapon.stacks * 0.02);
       drawMiniPiranha(
         ctx,
-        barLeft - 0.34 * scale + 0.08,
+        barLeft - 0.24 * scale + 0.05,
         barTop + 0.045,
         target.id,
         weapon.bitePulse,
