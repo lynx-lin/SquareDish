@@ -367,6 +367,20 @@
       desc: '在地图中心建造蜘蛛塔；建成后发送信号切换喷丝、狙杀或蜕壳模式，蜕壳可积累新生强化后续攻击。'
     },
     {
+      id: 'frostCannon',
+      name: '寒霜巨炮',
+      cooldown: 0.5,
+      activeUnlockLevel: 0,
+      desc: '按住蓄力积攒凝结核，松开后向移动方向释放贯穿寒霜光线；凝结核越多，光线越宽、越远、伤害越高。'
+    },
+    {
+      id: 'outlawShotgun',
+      name: '亡命霰弹枪',
+      cooldown: 1.2,
+      activeUnlockLevel: 3,
+      desc: '每 1.2 秒向最近敌人发射扇形散弹；本局每 50 击杀获得决斗勋章并增加弹丸，熟练 3 可强化下一轮穿透。'
+    },
+    {
       id: 'fleshPillar',
       name: '血肉柱',
       cooldown: 1.2,
@@ -414,7 +428,7 @@
     'poisonSacBook', 'iceSpikeGun', 'deathDice', 'launcherBox', 'necroBook',
     'durianBox', 'stickyGrenade', 'colorBalloon', 'balloonPump',
     'starStaff', 'energyTowerBox', 'symbioticVulture', 'bloodGlory',
-    'scavengerCrown', 'spiderTowerBox'
+    'scavengerCrown', 'spiderTowerBox', 'frostCannon', 'outlawShotgun'
   ];
   const SMELTING_WEAPON_IDS = [
     'fleshPillar', 'undertaker', 'chimera',
@@ -582,6 +596,8 @@
     bloodGlory: { category: '社区', tags: ['反击', '全方位', '尖刺'], damage: ['能量', '尖刺'], detail: '每当你损失生命值，向周围 12 个方向发射细长光芒，对敌人造成能量尖刺伤害，每束独立结算；主动持续烧血 5 秒，熟练 2 结束后回血，熟练 3 低血量时提高自然恢复。' },
     scavengerCrown: { category: '社区', tags: ['召唤', '成长', '投掷'], damage: ['毒', '物理', '尖刺', '爆炸'], detail: '入场召唤2只拾荒猴，会自动投掷竹矛或竹制雷管；玩家靠近后开始跟随，熟练3可强化跟随猴子的攻击。' },
     spiderTowerBox: { category: '社区', tags: ['建造', '支援', '成长'], damage: ['毒'], detail: '在地图正中心建造蜘蛛塔，建成后发送信号切换喷丝、狙杀或蜕壳模式；蜕壳积累新生强化后续攻击。' },
+    frostCannon: { category: '社区', tags: ['蓄力', '贯穿', '冰冻'], damage: ['冰', '能量'], detail: '按住蓄力积攒凝结核，松开后向移动方向释放贯穿寒霜光线；凝结核越多，光线越宽、越远、伤害越高；熟练3额外附加能量伤害。' },
+    outlawShotgun: { category: '社区', tags: ['成长', '散弹', '穿透'], damage: ['物理'], detail: '每1.2秒朝6米内最近的敌人发射扇形散弹；本局每50击杀获得1层决斗勋章并增加1颗弹丸；熟练3可让下一轮散弹穿透提升至5。' },
     fleshPillar: { category: '熔炼', tags: ['近战', '三重伤害', '爆发', '群爆'], damage: ['物理', '冰', '毒', '爆炸'], detail: '6 米内敌人死亡时积攒血肉原料；每 1.2 秒挥舞血肉柱，对 2.5 米半圆内敌人分别造成物理、冰、毒伤害；主动消耗原料向 8 米内最近敌人发射血肉弹，爆炸伤害随距离递减。' },
     undertaker: { category: '熔炼', tags: ['复活', '穿透', '自伤'], damage: ['能量', '真实'], detail: '每 4.8 秒失去 1HP；每秒发射缓慢、高穿透的灵魂球造成能量真实伤害；主动静止吟唱建造墓碑，致命伤时优先传送到墓碑复活。' },
     chimera: { category: '熔炼', tags: ['召唤', '协同'], damage: ['能量', '尖刺'], detail: '每存在一只幻造兽，玩家生命上限 -5；主动召唤幻造兽，幻造兽跟随玩家并自动发射高穿透幻造尖刺，每次射击后向随机方向跳跃。' },
@@ -1009,6 +1025,26 @@ const WEAPON_CODEX_TEXT = {
       "蜘蛛塔的建造时间降低至50秒。",
       "蜘蛛塔的建造时间降低至40秒。",
       "蜘蛛塔初始获得1层新生。"
+    ]
+  },
+  "frostCannon": {
+    "passive": "无。",
+    "auto": "无。",
+    "active": "按住主动蓄力，每0.1秒获得1层凝结核，最多80凝结核，松开后向当前移动方向释放寒霜光线。光线宽度为(0.4+凝结核/40)米，最远距离为(8+凝结核/8)米，对范围内所有敌人造成(凝结核×2)点冰系伤害。冷却0.5秒；凝结核为0时不会发射。",
+    "levels": [
+      "凝结核大于等于10的寒霜光线对目标造成1秒冰冻，对精英减半。",
+      "蓄力时移动速度提高20%。凝结核最大值增加到100",
+      "被寒霜光线伤害且无冰系免疫、无能量免疫的敌人，额外受到等同于凝结核数量的能量伤害。"
+    ]
+  },
+  "outlawShotgun": {
+    "passive": "本局每50击杀数获得1层决斗勋章。",
+    "auto": "每1.2秒朝6米内最近的敌人在±22°发射(10+决斗勋章)枚散弹，每颗造成7点物理伤害。",
+    "active": "熟练3解锁。下一次散弹的穿透+4（变为5），冷却10秒。",
+    "levels": [
+      "子弹的伤害增加至9点。",
+      "每颗子弹有(10+决斗勋章)%的概率造成双倍伤害，最多不超过100%。",
+      "子弹的伤害增加至10点。获得主动技能：下一次散弹的穿透+4（变为5），冷却10秒。"
     ]
   },
   "fleshPillar": {
@@ -2615,6 +2651,9 @@ const WEAPON_CODEX_TEXT = {
       : [];
     if (!raw.storeInitialized) {
       for (const id of COMMUNITY_WEAPON_IDS) profile.unlockedWeapons[id] = false;
+    }
+    for (const id of COMMUNITY_WEAPON_IDS) {
+      if (profile.unlockedWeapons[id] === undefined) profile.unlockedWeapons[id] = false;
     }
     profile.storeInitialized = true;
     const rawUnlockedRelics = Array.isArray(raw.unlockedRelics)
@@ -4792,6 +4831,11 @@ const WEAPON_CODEX_TEXT = {
           weapon.balloonCharging = false;
           weapon.balloonHoldTimer = 0;
         }
+        if (weapon.id === 'frostCannon') {
+          weapon.frostCharging = false;
+          weapon.frostChargeTimer = 0;
+          weapon.frostNuclei = 0;
+        }
       }
     }
   }
@@ -5069,6 +5113,14 @@ const WEAPON_CODEX_TEXT = {
       } else {
         weapon.balloonCharging = false;
         weapon.balloonHoldTimer = 0;
+      }
+    } else if (weapon.id === 'frostCannon') {
+      if (state.mode === 'playing') {
+        releaseFrostCannon(weapon);
+      } else {
+        weapon.frostCharging = false;
+        weapon.frostChargeTimer = 0;
+        weapon.frostNuclei = 0;
       }
     }
   }
@@ -5845,6 +5897,10 @@ const WEAPON_CODEX_TEXT = {
           lastStacks: 0,
           balloonCharging: false,
           balloonHoldTimer: 0,
+          frostCharging: false,
+          frostChargeTimer: 0,
+          frostNuclei: 0,
+          outlawPierceReady: false,
           flightTimer: 0,
           autoPuffTimer: 2,
           sprayTimer: 0,
@@ -5942,6 +5998,9 @@ const WEAPON_CODEX_TEXT = {
     const running = moving
       && (state.input.run || (stickActive && state.input.stickRun))
       && player.stamina > 0;
+    const frostChargeSpeed = player.weapons.some((weapon) => (
+      weapon.id === 'frostCannon' && weapon.level >= 2 && weapon.frostCharging
+    ));
     const baseSpeed = running
       ? player.runSpeed
       : PLAYER.walkSpeed + player.goldenShellStacks * 0.01;
@@ -5960,7 +6019,8 @@ const WEAPON_CODEX_TEXT = {
       * (1 + player.deathSpeedBonus)
       * (1 + player.necroSpeedBonus)
       * (player.waterShurikenSpeedTimer > 0 ? 2 : 1)
-      * (player.vineRockTimer > 0 && !running ? 1.5 : 1);
+      * (player.vineRockTimer > 0 && !running ? 1.5 : 1)
+      * (frostChargeSpeed ? 1.2 : 1);
 
     player.currentMoveSpeed = moving ? speed * moveIntensity : 0;
     player.displayMoveSpeed = speed;
@@ -6623,6 +6683,12 @@ const WEAPON_CODEX_TEXT = {
         case 'colorBalloon':
           updateColorBalloonWeapon(weapon, dt);
           break;
+        case 'frostCannon':
+          updateFrostCannonWeapon(weapon, dt);
+          break;
+        case 'outlawShotgun':
+          updateOutlawShotgunWeapon(weapon, dt);
+          break;
         case 'balloonPump':
           updateBalloonPumpWeapon(weapon, dt);
           break;
@@ -6859,6 +6925,21 @@ const WEAPON_CODEX_TEXT = {
           weapon.balloonCharging = true;
           weapon.balloonHoldTimer = 0;
           state.player.heldWeaponIndex = index;
+        }
+        break;
+      case 'frostCannon':
+        if (weapon.activeCooldown <= 0 && !weapon.frostCharging) {
+          weapon.frostCharging = true;
+          weapon.frostChargeTimer = 0;
+          weapon.frostNuclei = 0;
+          state.player.heldWeaponIndex = index;
+        }
+        break;
+      case 'outlawShotgun':
+        if (weapon.activeCooldown <= 0 && !weapon.outlawPierceReady) {
+          weapon.outlawPierceReady = true;
+          weapon.activeCooldown = 10;
+          addDamageNumber(state.player.x, state.player.y - 0.85, '贯穿装填', '#ffd27a');
         }
         break;
       case 'balloonPump':
@@ -11157,6 +11238,148 @@ const WEAPON_CODEX_TEXT = {
     addDamageNumber(player.x, player.y - 0.85, '巨大手里剑', '#8fe8ff');
   }
 
+  function frostNucleiCap(level) {
+    return level >= 2 ? 100 : 80;
+  }
+
+  function frostNucleiFromTimer(timer, level) {
+    return Math.min(frostNucleiCap(level), Math.max(0, Math.floor((timer + 1e-6) / 0.1)));
+  }
+
+  function updateFrostCannonWeapon(weapon, dt) {
+    weapon.activeCooldown = Math.max(0, weapon.activeCooldown - dt);
+    if (!weapon.frostCharging) return;
+    weapon.frostChargeTimer += dt;
+    weapon.frostNuclei = frostNucleiFromTimer(weapon.frostChargeTimer, weapon.level);
+  }
+
+  function applyFrostFreeze(enemy) {
+    if (!enemy || enemy.dead || enemy.immuneIce) return;
+    applyEnemyStun(enemy, 1);
+  }
+
+  function releaseFrostCannon(weapon) {
+    if (!weapon.frostCharging) return;
+    const nuclei = frostNucleiFromTimer(weapon.frostChargeTimer, weapon.level);
+    weapon.frostCharging = false;
+    weapon.frostChargeTimer = 0;
+    weapon.frostNuclei = 0;
+    const player = state.player;
+    if (!player) return;
+    if (nuclei <= 0) {
+      addDamageNumber(player.x, player.y - 0.85, '凝核不足', '#8ea3c4');
+      return;
+    }
+
+    weapon.activeCooldown = 0.5;
+    let fx = player.facing.x;
+    let fy = player.facing.y;
+    const facingLength = Math.hypot(fx, fy);
+    if (facingLength <= 0.01) {
+      fx = 0;
+      fy = 1;
+    } else {
+      fx /= facingLength;
+      fy /= facingLength;
+    }
+
+    const length = 8 + nuclei / 8;
+    const width = 0.4 + nuclei / 40;
+    const halfWidth = width / 2;
+    const angle = Math.atan2(fy, fx);
+    addEffect({
+      kind: 'frostBeam',
+      x: player.x,
+      y: player.y,
+      angle,
+      length,
+      width,
+      life: 0.18,
+      maxLife: 0.18,
+      color: '#a9eaff'
+    });
+
+    for (const enemy of state.enemies) {
+      if (!isEnemyTargetable(enemy)) continue;
+      const dx = enemy.x - player.x;
+      const dy = enemy.y - player.y;
+      const along = dx * fx + dy * fy;
+      if (along < 0 || along > length + enemy.r) continue;
+      const perpendicular = Math.abs(dx * fy - dy * fx);
+      if (perpendicular > halfWidth + enemy.r) continue;
+
+      damageEnemy(enemy, nuclei * 2, 'ice', false, 'frostCannon');
+      if (
+        weapon.level >= 3 &&
+        !enemy.dead &&
+        !enemy.immuneIce &&
+        !enemy.immuneEnergy
+      ) {
+        damageEnemy(enemy, nuclei, 'energy', false, 'frostCannon');
+      }
+      if (weapon.level >= 1 && nuclei >= 10 && !enemy.dead) {
+        applyFrostFreeze(enemy);
+      }
+    }
+
+    if (window.GameAudio) GameAudio.sfx('frostBeam');
+  }
+
+  function outlawMedals() {
+    return Math.floor(Math.max(0, state.kills || 0) / 50);
+  }
+
+  function updateOutlawShotgunWeapon(weapon, dt) {
+    weapon.activeCooldown = Math.max(0, weapon.activeCooldown - dt);
+    weapon.timer -= dt;
+    if (weapon.timer > 0) return;
+
+    const player = state.player;
+    if (!player) return;
+    const target = nearestEnemy(player.x, player.y, 6);
+    if (!target) {
+      weapon.timer = 0.1;
+      return;
+    }
+    fireOutlawShotgun(weapon, target);
+    weapon.timer = 1.2;
+  }
+
+  function fireOutlawShotgun(weapon, target) {
+    const player = state.player;
+    if (!player || !target) return;
+    const medals = outlawMedals();
+    const count = 10 + medals;
+    const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
+    const pierce = weapon.outlawPierceReady ? 5 : 1;
+    const doubleChance = weapon.level >= 2
+      ? Math.min(1, (10 + medals) / 100)
+      : 0;
+    const damage = weapon.level >= 3 ? 10 : (weapon.level >= 1 ? 9 : 7);
+
+    for (let i = 0; i < count; i += 1) {
+      const spread = count <= 1 ? 0 : -21 + (42 * i) / (count - 1);
+      const deviation = Math.random() * 2 - 1;
+      const angle = baseAngle + ((spread + deviation) * Math.PI) / 180;
+      state.projectiles.push({
+        kind: 'outlawPellet',
+        x: player.x,
+        y: player.y,
+        vx: Math.cos(angle) * 16,
+        vy: Math.sin(angle) * 16,
+        life: 0.4,
+        r: 0.08,
+        damage,
+        pierce,
+        doubleDamage: doubleChance > 0 && Math.random() < doubleChance,
+        hitIds: new Set(),
+        dead: false
+      });
+    }
+    if (weapon.outlawPierceReady) weapon.outlawPierceReady = false;
+    if (window.GameAudio) GameAudio.sfx('shotgunBlast');
+  }
+
   function distanceToSegment(px, py, ax, ay, bx, by) {
     const dx = bx - ax;
     const dy = by - ay;
@@ -13889,6 +14112,20 @@ const WEAPON_CODEX_TEXT = {
           }
           projectile.targetId = null;
         }
+      } else if (projectile.kind === 'outlawPellet') {
+        for (const enemy of state.enemies) {
+          if (!isEnemyTargetable(enemy) || projectile.hitIds.has(enemy.id)) continue;
+          const hitDistance = projectile.r + enemy.r;
+          if (dist2(projectile.x, projectile.y, enemy.x, enemy.y) > hitDistance * hitDistance) continue;
+          projectile.hitIds.add(enemy.id);
+          const damage = projectile.damage * (projectile.doubleDamage ? 2 : 1);
+          damageEnemy(enemy, damage, 'physical', false, 'outlawShotgun');
+          projectile.pierce -= 1;
+          if (projectile.pierce <= 0) {
+            projectile.dead = true;
+            break;
+          }
+        }
       } else if (projectile.kind === 'durian') {
         for (const enemy of state.enemies) {
           if (enemy.dead) continue;
@@ -14187,6 +14424,14 @@ const WEAPON_CODEX_TEXT = {
         ratio = weapon.balloonCharging
           ? clamp(weapon.balloonHoldTimer / 3, 0, 1)
           : 0;
+      } else if (weapon.id === 'frostCannon') {
+        ratio = weapon.frostCharging
+          ? clamp(weapon.frostNuclei / frostNucleiCap(weapon.level), 0, 1)
+          : 1 - clamp(weapon.activeCooldown / 0.5, 0, 1);
+      } else if (weapon.id === 'outlawShotgun') {
+        ratio = weapon.outlawPierceReady
+          ? 1
+          : 1 - clamp(weapon.timer / 1.2, 0, 1);
       } else if (weapon.id === 'balloonPump') {
         if (weapon.flightTimer > 0) {
           ratio = 1 - clamp(weapon.flightTimer / 3, 0, 1);
@@ -14267,6 +14512,29 @@ const WEAPON_CODEX_TEXT = {
           );
           card.state.textContent = maxStacks > 0 ? `气味 ${maxStacks}/3` : '自动投掷';
           card.state.className = maxStacks >= 2 ? 'weapon-state ready' : 'weapon-state';
+        }
+      } else if (weapon.id === 'frostCannon') {
+        if (weapon.frostCharging) {
+          card.state.textContent = `凝核 ${weapon.frostNuclei}/${frostNucleiCap(weapon.level)}`;
+          card.state.className = weapon.frostNuclei >= 10 ? 'weapon-state ready' : 'weapon-state cooling';
+        } else if (weapon.activeCooldown > 0) {
+          card.state.textContent = `冷却 ${weapon.activeCooldown.toFixed(1)}s`;
+          card.state.className = 'weapon-state cooling';
+        } else {
+          card.state.textContent = '按住蓄力';
+          card.state.className = 'weapon-state';
+        }
+      } else if (weapon.id === 'outlawShotgun') {
+        const medals = outlawMedals();
+        if (weapon.level >= 3 && weapon.outlawPierceReady) {
+          card.state.textContent = '贯穿就绪';
+          card.state.className = 'weapon-state ready';
+        } else if (weapon.level >= 3 && weapon.activeCooldown > 0) {
+          card.state.textContent = `贯穿 ${Math.ceil(weapon.activeCooldown)}s`;
+          card.state.className = 'weapon-state cooling';
+        } else {
+          card.state.textContent = `弹丸数 ${10 + medals}`;
+          card.state.className = 'weapon-state ready';
         }
       } else if (weapon.noActive) {
         if (weapon.id === 'deathDice') {
@@ -15278,6 +15546,15 @@ const WEAPON_CODEX_TEXT = {
         ctx.stroke();
       }
 
+      if (weapon.id === 'frostCannon' && weapon.frostCharging) {
+        const progress = clamp(weapon.frostNuclei / frostNucleiCap(weapon.level), 0, 1);
+        ctx.beginPath();
+        ctx.arc(0, 0, player.r + 0.3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+        ctx.lineWidth = 0.065;
+        ctx.strokeStyle = weapon.frostNuclei >= 10 ? '#e6fbff' : '#9fe8ff';
+        ctx.stroke();
+      }
+
       if (weapon.id === 'immortalSword') {
         if (weapon.charged) {
           ctx.beginPath();
@@ -15972,6 +16249,19 @@ const WEAPON_CODEX_TEXT = {
           );
           ctx.stroke();
         }
+      } else if (effect.kind === 'frostBeam') {
+        ctx.save();
+        ctx.translate(effect.x, effect.y);
+        ctx.rotate(effect.angle || 0);
+        ctx.fillStyle = `rgba(126, 232, 255, ${0.2 * alpha})`;
+        ctx.fillRect(0, -effect.width / 2, effect.length, effect.width);
+        ctx.strokeStyle = `rgba(224, 251, 255, ${0.75 * alpha})`;
+        ctx.lineWidth = Math.max(0.035, effect.width * 0.08);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(effect.length, 0);
+        ctx.stroke();
+        ctx.restore();
       } else if (effect.kind === 'beam') {
         ctx.beginPath();
         ctx.moveTo(effect.x1, effect.y1);
@@ -17679,6 +17969,19 @@ const WEAPON_CODEX_TEXT = {
           ctx.lineWidth = 0.03;
           ctx.stroke();
         }
+      } else if (projectile.kind === 'outlawPellet') {
+        const angle = Math.atan2(projectile.vy, projectile.vx);
+        const color = projectile.doubleDamage ? '#fff2b0' : '#ffd27a';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 0.04;
+        ctx.beginPath();
+        ctx.moveTo(projectile.x - Math.cos(angle) * 0.1, projectile.y - Math.sin(angle) * 0.1);
+        ctx.lineTo(projectile.x, projectile.y);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(projectile.x, projectile.y, 0.055, 0, Math.PI * 2);
+        ctx.fill();
       } else {
         const angle = Math.atan2(projectile.vy, projectile.vx);
         const tail = 0.5;

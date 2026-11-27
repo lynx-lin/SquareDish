@@ -596,6 +596,15 @@
       case 'iceCast':
         playTone(620, t, 0.24, 0.05, 'sine', 1200);
         break;
+      case 'frostBeam':
+        playTone(1100, t, 0.32, 0.085, 'sine', 220);
+        playTone(660, t + 0.02, 0.24, 0.045, 'triangle', 160);
+        playNoise(0.2, 0.045, 'highpass', 2400, t);
+        break;
+      case 'shotgunBlast':
+        playNoise(0.2, 0.18, 'lowpass', 900, t);
+        playTone(130, t, 0.16, 0.15, 'triangle', 45);
+        break;
       case 'summon':
         playTone(260, t, 0.18, 0.055, 'triangle', 390);
         playTone(390, t + 0.09, 0.22, 0.045, 'sine', 520);
@@ -670,6 +679,8 @@
     focusGauntlet: 'punch',
     forestBoots: 'vine',
     spiderTowerBox: 'signal',
+    frostCannon: 'iceCast',
+    outlawShotgun: 'signal',
     scavengerCrown: 'summon',
     poisonSacBook: 'summon',
     necroBook: 'summon',
