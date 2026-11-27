@@ -186,7 +186,7 @@
       name: '香蕉回旋镖',
       cooldown: 0.7,
       activeUnlockLevel: 0,
-      desc: '投掷追踪回旋镖，造成物理伤害，击中恢复体力；主动恢复20体力。'
+      desc: '投掷追踪回旋镖，造成物理伤害，击中恢复体力；主动恢复50体力。'
     },
     {
       id: 'fruitStaff',
@@ -214,14 +214,14 @@
       name: '邪恶缠绕',
       cooldown: 2,
       activeUnlockLevel: 0,
-      desc: '诅咒敌人，使其按移速受到永久持续的能量真实伤害。'
+      desc: '诅咒敌人，使其永久受到基于移速的持续的能量真实伤害。'
     },
     {
       id: 'iceStandoff',
       name: '冰寒对峙',
       cooldown: 1,
       activeUnlockLevel: 0,
-      desc: '短暂吟唱后持续攻击范围内最高血量敌人，并提高移速。'
+      desc: '短暂吟唱后持续攻击范围内最高血量敌人，并提高少量移速。'
     },
     {
       id: 'colorCandy',
@@ -546,7 +546,7 @@
     springTrap: { category: '新手', tags: ['陷阱', '控制', '减速'], damage: ['物理'], detail: '被动移速+20%；静止1秒布置弹簧陷阱，踩中的敌人被弹飞并在落地时受伤；熟练提升触发次数、数量、伤害、击退和减速。' },
     piranha: { category: '新手', tags: ['锁定', '持续', '减速'], damage: ['物理'], detail: '锁定近处最高血量敌人并持续减速；周期性撕咬，咬痕会提高后续伤害；高熟练缩短撕咬间隔并强化主动咬痕/减速。' },
     immortalSword: { category: '新手', tags: ['近战', '蓄力', '剑气'], damage: ['物理'], detail: '近身周期斩击；脱战后蓄力，敌人靠近时释放无限穿透剑气；1级静养回血，2/3级缩短蓄力时间，3级增强击退。' },
-    musicBomb: { category: '新手', tags: ['召唤', '嘲讽', '爆炸'], damage: ['物理', '爆炸'], detail: '定时获得音乐炸弹，最多存储2颗，场上最多同时存在4颗；放置后吸引敌人，被摧毁时爆炸，放置第5颗时最早放置的炸弹立即引爆；熟练2提高场上上限至5颗。' },
+    musicBomb: { category: '新手', tags: ['召唤', '嘲讽', '爆炸'], damage: ['物理', '爆炸'], detail: '定时获得音乐炸弹，最多存储2颗，场上最多同时存在4颗；放置后吸引敌人并播放音乐，被摧毁时爆炸；熟练2解锁第二种音乐并提高场上上限至5颗。' },
     thermalGun: { category: '进阶', tags: ['充能', '射线', '自伤'], damage: ['能量'], detail: '持续积攒热量，主动消耗热量发射射线；满热会自伤，1级后改为加速，射线伤害随热量提高。' },
     spikeMine: { category: '进阶', tags: ['陷阱', '尖刺', '爆炸'], damage: ['物理', '尖刺', '真实', '爆炸'], detail: '静止布置地雷；踩中后根据剩余尖刺值造成真伤并爆炸；2级获得备用雷与主动放置能力。' },
     gravityBook: { category: '进阶', tags: ['区域', '减速', '聚怪'], damage: ['能量', '真实'], detail: '自动生成重力场，造成能量真伤并减速；熟练2会吸引非精英敌人，精英免疫吸引；熟练1解锁高速模式，随机锁定7.2米内敌人并快速生成重力场；熟练3扩大范围。' },
@@ -652,12 +652,12 @@ const WEAPON_CODEX_TEXT = {
     ]
   },
   "musicBomb": {
-    "passive": "每5.6秒获得1颗音乐炸弹（陷阱），最多存储2颗，场上最多同时存在4颗，超出时最早放置的炸弹立即引爆，达上限时不启用冷却。",
+    "passive": "每5.6秒获得1颗音乐炸弹（陷阱），最多存储2颗，场上最多同时存在4颗，超出时最早放置的炸弹立即引爆，达上限时不启用冷却。放置后的音乐炸弹会吸引敌人并播放音乐，玩家靠近时音量提高、远离时减弱。",
     "auto": "无。",
     "active": "原地放置1颗音乐炸弹。音乐炸弹生命值25，非BOSS的敌方会将音乐炸弹视为玩家，被敌方摧毁时造成半径4米的64-32点物理爆炸伤害，该伤害随距离线性递降。",
     "levels": [
       "音乐炸弹的冷却降低至4.8秒。",
-      "音乐炸弹的音乐种类更多了。伤害增加至80-40，场上同时存在上限提高至5颗。",
+      "音乐炸弹的音乐种类更多了。伤害增加至80-40，场上同时存在上限提高至5颗。放置时会优先选择场上数量较少的音乐。",
       "音乐炸弹存储上限+1，玩家入场或复活时立即获得2颗音乐炸弹。"
     ]
   },
@@ -804,7 +804,7 @@ const WEAPON_CODEX_TEXT = {
   "iceStandoff": {
     "passive": "无。",
     "auto": "无。",
-    "active": "静止1秒吟唱，之后每0.2秒对3.6米内此时生命值最高的敌人造成23点冰系真实伤害，移速提高10%，持续5秒。3.6米范围内每有一个敌方单位，该伤害-1。每0.2秒重新选择当前生命最高的敌人；伤害最低为1。",
+    "active": "静止1秒吟唱，之后每0.2秒对3.6米内此时生命值最高的敌人造成23点冰系真实伤害，移速提高20%，持续5秒。3.6米范围内每有一个敌方单位，该伤害-1，伤害最低为1。",
     "levels": [
       "每次造成的伤害最低为15点。",
       "对生命值大于100的单位造成伤害×1.2。",
@@ -2471,6 +2471,11 @@ const WEAPON_CODEX_TEXT = {
     }
 
     loadSaveData();
+    if (window.GameAudio) {
+      GameAudio.init();
+      GameAudio.setVolume(state.settings.volume / 100);
+      GameAudio.setScene('menu');
+    }
     ui.menuRelics.innerHTML = '';
     renderMenuRelics();
     renderMenuLoadout();
@@ -3031,6 +3036,7 @@ const WEAPON_CODEX_TEXT = {
     if (ui.volumeSlider) {
       ui.volumeSlider.value = String(state.settings.volume);
       ui.volumeValue.textContent = `${state.settings.volume}%`;
+      if (window.GameAudio) GameAudio.setVolume(state.settings.volume / 100);
     }
   }
 
@@ -4706,6 +4712,7 @@ const WEAPON_CODEX_TEXT = {
     ui.volumeSlider.addEventListener('input', () => {
       state.settings.volume = Number(ui.volumeSlider.value);
       ui.volumeValue.textContent = `${state.settings.volume}%`;
+      if (window.GameAudio) GameAudio.setVolume(state.settings.volume / 100);
     });
     ui.volumeSlider.addEventListener('change', () => saveActiveSlot());
     $('pause-resume').addEventListener('click', resumeGame);
@@ -5073,6 +5080,10 @@ const WEAPON_CODEX_TEXT = {
   function beginRun() {
     state.rebindingAction = null;
     state.mode = 'playing';
+    if (window.GameAudio && !menuDemo) {
+      GameAudio.setPaused(false);
+      GameAudio.setScene('battle');
+    }
     state.time = 0;
     state.kills = 0;
     state.damageDealt = 0;
@@ -5182,6 +5193,10 @@ const WEAPON_CODEX_TEXT = {
     saveActiveSlot();
     state.rebindingAction = null;
     state.mode = 'menu';
+    if (window.GameAudio) {
+      GameAudio.setPaused(false);
+      GameAudio.setScene('menu');
+    }
     state.player = null;
     state.enemies = [];
     state.projectiles = [];
@@ -5378,6 +5393,10 @@ const WEAPON_CODEX_TEXT = {
     }
 
     resetInput();
+    if (window.GameAudio) {
+      GameAudio.setPaused(false);
+      GameAudio.setScene('menu');
+    }
     updateCamera();
   }
 
@@ -5541,6 +5560,7 @@ const WEAPON_CODEX_TEXT = {
   function pauseGame() {
     if (state.mode !== 'playing') return;
     state.mode = 'paused';
+    if (window.GameAudio) GameAudio.setPaused(true);
     resetInput();
     setHidden(ui.pause, false);
   }
@@ -5548,6 +5568,10 @@ const WEAPON_CODEX_TEXT = {
   function resumeGame() {
     if (state.mode !== 'paused') return;
     state.mode = 'playing';
+    if (window.GameAudio) {
+      GameAudio.setPaused(false);
+      GameAudio.setScene('battle');
+    }
     resetInput();
     setHidden(ui.pause, true);
     state.acc = 0;
@@ -5559,6 +5583,11 @@ const WEAPON_CODEX_TEXT = {
     if (state.mode !== 'playing') return;
     if (!victory && trySoulWoodArmorRevive()) return;
     state.mode = victory ? 'victory' : 'defeat';
+    if (window.GameAudio) {
+      GameAudio.setPaused(false);
+      GameAudio.sfx(victory ? 'victory' : 'defeat');
+      GameAudio.setScene('menu');
+    }
     recordRun(victory);
     resetInput();
     setHidden(ui.pause, true);
@@ -5760,6 +5789,7 @@ const WEAPON_CODEX_TEXT = {
           switchCooldown: 0,
           attackCount: 0,
           bombs: weapon.id === 'musicBomb' && level >= 3 ? 2 : 0,
+          musicPlacementCount: 0,
           bombTimer: weapon.id === 'musicBomb' ? (level >= 1 ? 4.8 : 5.6) : 0,
           heat: 0,
           heatGainTimer: 0.5,
@@ -5924,7 +5954,7 @@ const WEAPON_CODEX_TEXT = {
       * (player.rodSpeedTimer > 0 ? 1.2 : 1)
       * (player.experienceGrowth ? 0.8 : 1)
       * (1 + player.fruitSpeedBonus)
-      * (player.standoffSpeedTimer > 0 ? 1.1 : 1)
+      * (player.standoffSpeedTimer > 0 ? 1.2 : 1)
       * (player.cheatSpeedTimer > 0 ? 1.2 : 1)
       * (player.balloonSpeedTimer > 0 ? 1.25 : 1)
       * (1 + player.deathSpeedBonus)
@@ -6442,6 +6472,7 @@ const WEAPON_CODEX_TEXT = {
     player.invuln = PLAYER.iframe;
     state.hitFlash = Math.max(state.hitFlash, 0.18);
     state.shake = Math.max(state.shake, 0.12);
+    if (window.GameAudio) GameAudio.sfx('hurt');
     addDamageNumber(player.x, player.y - 0.65, formatNumber(damage), '#ff8398');
 
     if (player.gauzeLayers > 0) {
@@ -6642,6 +6673,7 @@ const WEAPON_CODEX_TEXT = {
     if (!player || state.mode !== 'playing') return;
     const weapon = player.weapons[index];
     if (!weapon || !weapon.activeUnlocked) return;
+    if (window.GameAudio) GameAudio.weaponActive(weapon.id);
 
     switch (weapon.id) {
       case 'rabbit':
@@ -7340,6 +7372,18 @@ const WEAPON_CODEX_TEXT = {
       explodeBomb(fieldBombs[0]);
     }
 
+    let musicTrack = 'A';
+    if (weapon.level >= 2) {
+      const activeBombs = state.bombs.filter((bomb) => !bomb.dead);
+      const countA = activeBombs.filter((bomb) => bomb.musicTrack === 'A').length;
+      const countB = activeBombs.filter((bomb) => bomb.musicTrack === 'B').length;
+      const placementIndex = weapon.musicPlacementCount || 0;
+      if (countA < countB) musicTrack = 'A';
+      else if (countB < countA) musicTrack = 'B';
+      else musicTrack = placementIndex % 2 === 0 ? 'A' : 'B';
+      weapon.musicPlacementCount = placementIndex + 1;
+    }
+
     weapon.bombs -= 1;
     state.bombs.push({
       id: nextEntityId++,
@@ -7348,6 +7392,7 @@ const WEAPON_CODEX_TEXT = {
       r: 0.3,
       hp:25,
       maxHp: 25,
+      musicTrack,
       damageMax: weapon.level >= 2 ? 80 : 64,
       damageMin: weapon.level >= 2 ? 40 : 32,
       hitFlash: 0,
@@ -7513,6 +7558,7 @@ const WEAPON_CODEX_TEXT = {
   function explodeSpikeMine(mine) {
     if (mine.dead) return;
     mine.dead = true;
+    if (window.GameAudio) GameAudio.explosion('spikeMine');
     for (const enemy of state.enemies) {
       if (enemy.dead) continue;
       const distance = Math.hypot(enemy.x - mine.x, enemy.y - mine.y);
@@ -7793,6 +7839,7 @@ const WEAPON_CODEX_TEXT = {
   function explodeIceBurst(projectile) {
     if (projectile.dead) return;
     projectile.dead = true;
+    if (window.GameAudio) GameAudio.explosion('iceBurst');
     const radius = projectile.level >= 3 ? 2.7 : 2.4;
     const maxDamage = projectile.level >= 3 ? 28 : 24;
     const minDamage = projectile.level >= 3 ? 14 : 12;
@@ -8048,6 +8095,7 @@ const WEAPON_CODEX_TEXT = {
       fruit.timer -= dt;
       if (fruit.timer > 0) continue;
       fruit.dead = true;
+      if (window.GameAudio) GameAudio.explosion('fruitStaff');
       const radius = 1.6 + fruit.degree * 0.1;
       const maxDamage = fruit.degree;
       const minDamage = fruit.degree * 0.5;
@@ -8700,6 +8748,7 @@ const WEAPON_CODEX_TEXT = {
   function explodePoisonSac(sac) {
     if (sac.dead) return;
     sac.dead = true;
+    if (window.GameAudio) GameAudio.explosion('poisonSacBook');
     for (const enemy of state.enemies) {
       if (enemy.dead) continue;
       const distance = Math.hypot(enemy.x - sac.x, enemy.y - sac.y);
@@ -9424,6 +9473,7 @@ const WEAPON_CODEX_TEXT = {
   function explodeStickyGrenade(grenade) {
     if (grenade.dead) return;
     grenade.dead = true;
+    if (window.GameAudio) GameAudio.explosion('stickyGrenade');
     for (const enemy of state.enemies) {
       if (enemy.dead) continue;
       const distance = Math.hypot(enemy.x - grenade.x, enemy.y - grenade.y);
@@ -9585,6 +9635,7 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function applyBalloonExplosion(x, y, radius, damageMax, damageMin, knockback, balloonLevel, pumpLevel, scheduleSecondary, sourceId = 'colorBalloon') {
+    if (window.GameAudio) GameAudio.explosion(sourceId);
     for (const enemy of state.enemies) {
       if (enemy.dead) continue;
       const distance = Math.hypot(enemy.x - x, enemy.y - y);
@@ -10311,6 +10362,7 @@ const WEAPON_CODEX_TEXT = {
   function explodeMonkeyBomb(projectile) {
     if (!projectile || projectile.dead) return;
     projectile.dead = true;
+    if (window.GameAudio) GameAudio.explosion(projectile.sourceId || 'scavengerCrown');
     for (const enemy of state.enemies) {
       if (!isEnemyTargetable(enemy)) continue;
       const distance = Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y);
@@ -10628,6 +10680,7 @@ const WEAPON_CODEX_TEXT = {
   function explodeFleshBomb(projectile) {
     if (projectile.dead) return;
     projectile.dead = true;
+    if (window.GameAudio) GameAudio.explosion('fleshPillar');
     const radius = projectile.level >= 2 ? 2.8 : 2.5;
     const damageMax = projectile.level >= 3 ? 36 : 30;
     const damageMin = damageMax * 0.5;
@@ -11247,6 +11300,7 @@ const WEAPON_CODEX_TEXT = {
   function explodeBomb(bomb) {
     if (!bomb || bomb.dead) return;
     bomb.dead = true;
+    if (window.GameAudio) GameAudio.explosion('musicBomb');
     for (const enemy of state.enemies) {
       if (enemy.dead) continue;
       const distance = Math.hypot(enemy.x - bomb.x, enemy.y - bomb.y);
@@ -12751,6 +12805,7 @@ const WEAPON_CODEX_TEXT = {
 
   function explodeCopperCoin(projectile) {
     projectile.dead = true;
+    if (window.GameAudio) GameAudio.explosion('oscillationSafe');
     const radius = 2;
     for (const enemy of state.enemies) {
       if (!isEnemyTargetable(enemy)) continue;
@@ -12911,6 +12966,7 @@ const WEAPON_CODEX_TEXT = {
     if (sourceId) {
       state.damageByWeapon[sourceId] = (state.damageByWeapon[sourceId] || 0) + damage;
     }
+    if (window.GameAudio) GameAudio.weaponHit(sourceId, effectiveType, options);
     enemy.hitFlash = 0.08;
 
     if (enemy.type === 'waterElement' && effectiveType === 'ice') {
@@ -12989,6 +13045,7 @@ const WEAPON_CODEX_TEXT = {
 
     enemy.dead = true;
     state.kills += 1;
+    if (window.GameAudio) GameAudio.sfx(enemy.isBoss ? 'bossDeath' : 'death');
     handleFleshPillarDeath(enemy);
 
     for (const segment of state.enemies) {
@@ -13950,6 +14007,7 @@ const WEAPON_CODEX_TEXT = {
     updateEnemyProjectiles(dt);
     updatePlayerProjectiles(dt);
     updateBombs(dt);
+    if (window.GameAudio) GameAudio.setBombMusic(state.bombs, state.player);
     updateDamageNumbers(dt);
     updateEffects(dt);
     updateCamera();
@@ -16009,13 +16067,15 @@ const WEAPON_CODEX_TEXT = {
   function drawBombs(ctx) {
     for (const bomb of state.bombs) {
       if (bomb.dead) continue;
+      const accent = bomb.musicTrack === 'B' ? '#8fe0c7' : '#c7a6ff';
+      const border = bomb.musicTrack === 'B' ? '#3f8f80' : '#6e4d9f';
 
       ctx.beginPath();
       ctx.arc(bomb.x, bomb.y, bomb.r, 0, Math.PI * 2);
-      ctx.fillStyle = bomb.hitFlash > 0 ? '#ffffff' : '#c7a6ff';
+      ctx.fillStyle = bomb.hitFlash > 0 ? '#ffffff' : accent;
       ctx.fill();
       ctx.lineWidth = 0.06;
-      ctx.strokeStyle = '#6e4d9f';
+      ctx.strokeStyle = border;
       ctx.stroke();
 
       ctx.fillStyle = '#261a3f';
@@ -16029,7 +16089,7 @@ const WEAPON_CODEX_TEXT = {
       const ratio = clamp(bomb.hp / bomb.maxHp, 0, 1);
       ctx.fillStyle = 'rgba(3, 8, 18, 0.8)';
       ctx.fillRect(bomb.x - 0.4, bomb.y - 0.58, 0.8, 0.08);
-      ctx.fillStyle = '#c7a6ff';
+      ctx.fillStyle = accent;
       ctx.fillRect(bomb.x - 0.4, bomb.y - 0.58, 0.8 * ratio, 0.08);
     }
   }
