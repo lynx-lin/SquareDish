@@ -2063,9 +2063,9 @@ const WEAPON_CODEX_TEXT = {
   };
   const BACKGROUND_OPTIONS = [
     { id: 'none', name: '虚空', desc: '深色棋盘' },
-    { id: 'desert', name: '沙漠', desc: '浅黄沙地' },
+    { id: 'desert', name: '赤沙峡谷', desc: '暗红沙岩' },
     { id: 'industrial', name: '工厂', desc: '灰色网格' },
-    { id: 'grass', name: '草原', desc: '浅绿草地' }
+    { id: 'grass', name: '幽光林地', desc: '深色林地' }
   ];
   const TOUCH_SIDE_OPTIONS = [
     { id: 'left', name: '摇杆在左', desc: '武器 HUD 在右' },
@@ -14739,9 +14739,9 @@ const WEAPON_CODEX_TEXT = {
 
     const backgroundFills = {
       none: '#070b14',
-      desert: '#f2dfa4',
+      desert: '#2a1c18',
       industrial: '#8f969d',
-      grass: '#bfe6a8'
+      grass: '#10291f'
     };
     ctx.fillStyle = backgroundFills[state.settings.background] || backgroundFills.none;
     ctx.fillRect(0, 0, width, height);
@@ -14851,15 +14851,25 @@ const WEAPON_CODEX_TEXT = {
     const background = state.settings.background;
 
     if (background === 'desert') {
-      for (let x = left; x <= right; x += 1.5) {
-        for (let y = top; y <= bottom; y += 1.5) {
+      ctx.strokeStyle = 'rgba(164, 96, 64, 0.12)';
+      ctx.lineWidth = 0.14;
+      for (let y = top; y <= bottom; y += 4.2) {
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        for (let x = left; x <= right; x += 2.2) {
+          ctx.lineTo(x, y + Math.sin(x * 0.35 + y * 0.6) * 0.32);
+        }
+        ctx.stroke();
+      }
+      for (let x = left; x <= right; x += 2.4) {
+        for (let y = top; y <= bottom; y += 2.4) {
           const hash = backgroundHash(x, y);
-          if (hash < 0.7) continue;
-          const offsetX = (backgroundHash(x + 3, y) - 0.5) * 1.0;
-          const offsetY = (backgroundHash(x, y + 7) - 0.5) * 1.0;
+          if (hash < 0.62) continue;
+          const offsetX = (backgroundHash(x + 3, y) - 0.5) * 1.2;
+          const offsetY = (backgroundHash(x, y + 7) - 0.5) * 1.2;
           ctx.beginPath();
-          ctx.arc(x + offsetX, y + offsetY, 0.025 + hash * 0.035, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(76, 57, 28, 0.28)';
+          ctx.arc(x + offsetX, y + offsetY, 0.03 + hash * 0.045, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(122, 74, 52, 0.2)';
           ctx.fill();
         }
       }
@@ -14867,20 +14877,45 @@ const WEAPON_CODEX_TEXT = {
     }
 
     if (background === 'grass') {
-      ctx.strokeStyle = 'rgba(57, 107, 50, 0.28)';
-      ctx.lineWidth = 0.025;
-      for (let x = left; x <= right; x += 1.8) {
-        for (let y = top; y <= bottom; y += 1.8) {
+      ctx.fillStyle = 'rgba(36, 78, 58, 0.26)';
+      for (let x = left; x <= right; x += 3.6) {
+        for (let y = top; y <= bottom; y += 3.6) {
+          const hash = backgroundHash(x + 2, y + 4);
+          if (hash < 0.55) continue;
+          ctx.beginPath();
+          ctx.ellipse(
+            x + (backgroundHash(x + 8, y) - 0.5) * 1.4,
+            y + (backgroundHash(x, y + 6) - 0.5) * 1.4,
+            0.35 + hash * 0.45,
+            0.2 + hash * 0.25,
+            hash * Math.PI,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(101, 176, 125, 0.25)';
+      ctx.lineWidth = 0.028;
+      for (let x = left; x <= right; x += 2.6) {
+        for (let y = top; y <= bottom; y += 2.6) {
           const hash = backgroundHash(x, y);
-          if (hash < 0.32) continue;
-          const baseX = x + (backgroundHash(x + 5, y) - 0.5) * 1.1;
-          const baseY = y + (backgroundHash(x, y + 9) - 0.5) * 1.1;
-          for (let blade = 0; blade < 3; blade += 1) {
-            const sway = (backgroundHash(x + blade, y + 2) - 0.5) * 0.18;
+          if (hash < 0.52) continue;
+          const baseX = x + (backgroundHash(x + 5, y) - 0.5) * 1.2;
+          const baseY = y + (backgroundHash(x, y + 9) - 0.5) * 1.2;
+          for (let blade = 0; blade < 2; blade += 1) {
+            const sway = (backgroundHash(x + blade, y + 2) - 0.5) * 0.16;
             ctx.beginPath();
-            ctx.moveTo(baseX + blade * 0.045, baseY);
-            ctx.quadraticCurveTo(baseX + sway, baseY - 0.18, baseX + sway * 1.4, baseY - 0.32);
+            ctx.moveTo(baseX + blade * 0.06, baseY);
+            ctx.quadraticCurveTo(baseX + sway, baseY - 0.16, baseX + sway * 1.5, baseY - 0.3);
             ctx.stroke();
+          }
+          if (hash > 0.88) {
+            ctx.fillStyle = 'rgba(139, 255, 210, 0.3)';
+            ctx.beginPath();
+            ctx.arc(baseX + 0.2, baseY - 0.45, 0.035, 0, Math.PI * 2);
+            ctx.fill();
           }
         }
       }
@@ -17237,6 +17272,18 @@ const WEAPON_CODEX_TEXT = {
   function drawPlayerProjectiles(ctx) {
     for (const projectile of state.projectiles) {
       if (projectile.dead) continue;
+
+      const shadowRadius = Math.max(0.05, (projectile.r || 0.08) + 0.025);
+      const shadowLength = Math.max(0.07, (projectile.r || 0.08) * 1.9);
+      const shadowAngle = Math.atan2(projectile.vy || 0, projectile.vx || 1);
+      ctx.save();
+      ctx.translate(projectile.x, projectile.y);
+      ctx.rotate(shadowAngle);
+      ctx.fillStyle = 'rgba(2, 5, 12, 0.22)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, shadowLength, shadowRadius, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
       if (projectile.kind === 'arcane') {
         const arcaneAngle = Math.atan2(projectile.vy, projectile.vx);
