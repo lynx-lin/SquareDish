@@ -604,7 +604,7 @@ const WEAPON_CODEX_TEXT = {
   },
   "poisonBow": {
     "passive": "无。",
-    "auto": "对10米内最近的敌方每隔0.7秒射出一发穿透3的弓箭，造成15点物理尖刺伤害，附加不可叠加的毒系持续伤害（每0.7秒造成3点毒系持续伤害，持续1.5秒）。",
+    "auto": "对10米内最近的敌方每隔0.7秒射出一发穿透3的弓箭，造成19点物理尖刺伤害，附加不可叠加的毒系持续伤害（每0.7秒造成3点毒系持续伤害，持续1.5秒）。",
     "active": "熟练1解锁",
     "levels": [
       "毒的持续时间延长至3秒，伤害提高至4点。主动释放：切换强毒模式，箭矢无视其他单位直接攻击血量最高的敌方单位，持续伤害可以叠加，穿透降为1。",
@@ -745,10 +745,10 @@ const WEAPON_CODEX_TEXT = {
   "shadowSpear": {
     "passive": "无。",
     "auto": "每0.8秒朝距离玩家最近的敌人发射幻影矛，穿透4，对敌人造成27点能量尖刺伤害。",
-    "active": "朝操控方向在0.2秒内移动4米，期间不受任何伤害，对沿途的敌人造成33点物理尖刺伤害。冷却24秒。",
+    "active": "朝操控方向在0.2秒内移动4米，期间不受任何伤害，对沿途的敌人造成33点物理尖刺伤害。冷却20秒。",
     "levels": [
       "幻影矛的射弹速度提高25%。",
-      "技能冷却缩短至20秒。",
+      "技能冷却缩短至16秒。",
       "幻影矛造成伤害时，使敌人下一次受到的伤害×1.25。"
     ]
   },
@@ -6921,7 +6921,7 @@ const WEAPON_CODEX_TEXT = {
       weapon.attackCount += 1;
       const special = weapon.level >= 2 && weapon.attackCount % 4 === 0;
       const pierce = strong ? 1 : special ? 8 : 3;
-      const speed = special && !strong ? 6 : 4;
+      const speed = special && !strong ? 9 : 6;
       firePoisonArrow(target, weapon, { special, pierce, speed, strong });
       weapon.timer = weapon.level >= 2 ? 0.6 : 0.7;
     } else {
@@ -7161,7 +7161,7 @@ const WEAPON_CODEX_TEXT = {
       vy: Math.sin(angle) * speed,
       life: 3,
       r: 0.1,
-      damage: 17,
+      damage: 19,
       pierce: options.pierce || 3,
       hitIds: new Set(),
       strong: Boolean(options.strong),
@@ -7190,7 +7190,7 @@ const WEAPON_CODEX_TEXT = {
           const hitDistance = rabbit.r + enemy.r;
           if (dist2(rabbit.x, rabbit.y, enemy.x, enemy.y) <= hitDistance * hitDistance) {
             dash.hit.add(enemy.id);
-            const baseDamage = weapon.level >= 1 ? 12 : 17;
+            const baseDamage = weapon.level >= 2 ? 17 : weapon.level >= 1 ? 12 : 17;
             const damage = baseDamage * (weapon.activeTimer > 0 ? 1.5 : 1);
             damageEnemy(enemy, damage, 'physical', false, 'rabbit');
           }
@@ -7970,7 +7970,7 @@ const WEAPON_CODEX_TEXT = {
       maxLife: 0.2,
       color: '#c39bff'
     });
-    weapon.activeCooldown = weapon.level >= 2 ? 20 : 24;
+    weapon.activeCooldown = weapon.level >= 2 ? 16 : 20;
   }
 
   function updateBananaWeapon(weapon, dt) {
@@ -10274,7 +10274,7 @@ const WEAPON_CODEX_TEXT = {
       r: projectile.radius,
       life: 0.3,
       maxLife: 0.3,
-      color: '#d8a866'
+      color: '#b1e76a'
     });
   }
 
@@ -17313,18 +17313,21 @@ const WEAPON_CODEX_TEXT = {
         ctx.save();
         ctx.translate(projectile.x, projectile.y);
         ctx.rotate(angle);
-        ctx.fillStyle = '#8f6a3e';
+        ctx.fillStyle = '#5f914a';
         ctx.fillRect(-0.13, -0.075, 0.26, 0.15);
-        ctx.strokeStyle = '#d8b16a';
+        ctx.strokeStyle = '#c6ee8e';
         ctx.lineWidth = 0.02;
         ctx.strokeRect(-0.13, -0.075, 0.26, 0.15);
-        ctx.strokeStyle = '#ffe28a';
+        ctx.fillStyle = '#3f6d35';
+        ctx.fillRect(-0.07, -0.075, 0.035, 0.15);
+        ctx.fillRect(0.04, -0.075, 0.035, 0.15);
+        ctx.strokeStyle = '#d9f5a4';
         ctx.lineWidth = 0.018;
         ctx.beginPath();
         ctx.moveTo(0.12, -0.04);
         ctx.quadraticCurveTo(0.2, -0.12, 0.18, -0.18);
         ctx.stroke();
-        ctx.fillStyle = '#ffb347';
+        ctx.fillStyle = '#a8ff7a';
         ctx.beginPath();
         ctx.arc(0.18, -0.18, 0.035, 0, Math.PI * 2);
         ctx.fill();
