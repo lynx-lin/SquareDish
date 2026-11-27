@@ -564,7 +564,7 @@
     iceStandoff: { category: '老手', tags: ['吟唱', '锁定', '加速'], damage: ['冰'], detail: '吟唱后持续攻击范围内最高血量敌人，同时提高自身移速。' },
     colorCandy: { category: '老手', tags: ['撒糖', '随机', '延迟落地'], damage: ['物理', '冰', '毒', '能量'], detail: '向周围抛撒糖果；飞行碰撞或落地后踩中都会造成随机属性伤害；熟练2选择更优属性，熟练3增加数量与伤害。' },
     deathKnife: { category: '老手', tags: ['积攒', '爆发'], damage: ['能量'], detail: '积攒殒命值，主动消耗全部殒命值对最近敌人造成能量爆发。' },
-    forestBoots: { category: '老手', tags: ['陷阱', '轨迹', '区域'], damage: ['毒', '尖刺'], detail: '被动移速+10%；移动时留下尖刺丛，对经过的敌人造成伤害和减速；主动用树藤捆住周围非精英敌人并伤害经过者。' },
+    forestBoots: { category: '老手', tags: ['陷阱', '轨迹', '区域'], damage: ['毒', '尖刺'], detail: '被动移速+10%；移动时留下尖刺丛，对经过的敌人造成伤害和减速；主动瞬间捆住周围非精英敌人3秒，碰触被捆者的敌人受伤。' },
     bloodKnife: { category: '老手', tags: ['自伤', '环形', '回血'], damage: ['物理'], detail: '消耗生命发射环形飞刀，击杀回血；熟练2消耗血量强化伤害。' },
     cheatCode: { category: '老手', tags: ['锁定', '秒杀', '无敌'], damage: ['能量','真实'], detail: '锁定数秒后秒杀非精英，或重创精英；受到伤害后短暂无敌。' },
     poisonSacBook: { category: '社区', tags: ['召唤', '自爆', '传播'], damage: ['毒', '爆炸', '持续'], detail: '静止吟唱召唤毒胞，毒胞追敌自爆并传播胞毒；被感染的敌人死亡后会变成新的毒胞。' },
@@ -834,7 +834,7 @@ const WEAPON_CODEX_TEXT = {
   "forestBoots": {
     "passive": "移动速度提高10%。",
     "auto": "每0.5秒留下一个半径0.3米的尖刺丛，走到尖刺丛上的敌人立刻受到16毒系尖刺伤害，并减速该敌人20%，每个尖刺丛最多能使用3次，用完消失，且最多存在3秒。",
-    "active": "用树藤捆住半径4米内的所有非精英敌人，使其移动速度降低100%，并对经过树藤的敌人造成30点毒系尖刺伤害，持续3秒。冷却25秒。",
+    "active": "瞬间用树藤捆住半径4米内的所有非精英敌人3秒；被捆敌人接触到的其他敌人受到16点毒系尖刺伤害。对精英敌人完全无效。冷却25秒。",
     "levels": [
       "尖刺丛的半径增大至0.4米，使用次数变为4次。",
       "尖刺丛的伤害提高至19。",
@@ -2253,7 +2253,7 @@ const WEAPON_CODEX_TEXT = {
     fruits: [],
     candies: [],
     patches: [],
-    forestVines: [],
+    forestRoots: [],
     cart: null,
     effects: [],
     bombs: [],
@@ -5095,7 +5095,7 @@ const WEAPON_CODEX_TEXT = {
     state.fruits = [];
     state.candies = [];
     state.patches = [];
-    state.forestVines = [];
+    state.forestRoots = [];
     state.cart = null;
     state.effects = [];
     state.bombs = [];
@@ -5193,7 +5193,7 @@ const WEAPON_CODEX_TEXT = {
     state.fruits = [];
     state.candies = [];
     state.patches = [];
-    state.forestVines = [];
+    state.forestRoots = [];
     state.cart = null;
     state.effects = [];
     state.bombs = [];
@@ -8466,45 +8466,46 @@ const WEAPON_CODEX_TEXT = {
     if (weapon.activeCooldown > 0) return;
     const player = state.player;
     weapon.activeCooldown = 25;
-    state.forestVines.push({
-      x: player.x,
-      y: player.y,
-      r: 4,
-      life: 3,
-      maxLife: 3,
-      hitIds: new Set(),
-      dead: false
-    });
     addEffect({
-      kind: 'ring',
+      kind: 'forestBurst',
       x: player.x,
       y: player.y,
       r: 4,
-      life: 0.45,
-      maxLife: 0.45,
+      life: 0.35,
+      maxLife: 0.35,
       color: '#8ee06a'
     });
+    for (const enemy of state.enemies) {
+      if (enemy.dead || enemy.isElite || enemy.isBoss || enemy.immuneSlow) continue;
+      if (dist2(player.x, player.y, enemy.x, enemy.y) > 4 * 4) continue;
+      applyEnemySlow(enemy, 0, 3);
+      state.forestRoots.push({
+        enemyId: enemy.id,
+        timer: 3,
+        contactHits: new Set()
+      });
+    }
     addDamageNumber(player.x, player.y - 0.9, '森林藤蔓', '#b6f28c');
   }
 
-  function updateForestVines(dt) {
-    for (const field of state.forestVines) {
-      if (field.dead) continue;
-      for (const enemy of state.enemies) {
-        if (enemy.dead) continue;
-        if (dist2(field.x, field.y, enemy.x, enemy.y) > (field.r + enemy.r) ** 2) continue;
-        if (!field.hitIds.has(enemy.id)) {
-          field.hitIds.add(enemy.id);
-          damageEnemy(enemy, 30, 'poison', false, 'forestBoots', { spike: true });
-        }
-        if (!enemy.dead && !enemy.isElite && !enemy.isBoss) {
-          applyEnemySlow(enemy, 0, Math.max(0.2, field.life));
-        }
+  function updateForestRoots(dt) {
+    for (const root of state.forestRoots) {
+      const target = state.enemies.find((enemy) => enemy.id === root.enemyId && !enemy.dead);
+      if (!target) {
+        root.timer = 0;
+        continue;
       }
-      field.life -= dt;
-      if (field.life <= 0) field.dead = true;
+      if (!target.immuneSlow) applyEnemySlow(target, 0, Math.max(0.05, root.timer));
+      for (const enemy of state.enemies) {
+        if (enemy === target || enemy.dead || enemy.isElite || enemy.isBoss) continue;
+        if (root.contactHits.has(enemy.id)) continue;
+        if (dist2(target.x, target.y, enemy.x, enemy.y) > (target.r + enemy.r + 0.1) ** 2) continue;
+        root.contactHits.add(enemy.id);
+        damageEnemy(enemy, 16, 'poison', false, 'forestBoots', { spike: true });
+      }
+      root.timer -= dt;
     }
-    state.forestVines = state.forestVines.filter((field) => !field.dead);
+    state.forestRoots = state.forestRoots.filter((root) => root.timer > 0);
   }
 
   function updatePatches(dt) {
@@ -13928,7 +13929,7 @@ const WEAPON_CODEX_TEXT = {
     updateEnergyTowers(dt);
     updateSpawner(dt);
     updateSpiderWebs(dt);
-    updateForestVines(dt);
+    updateForestRoots(dt);
     updateEnemies(dt);
     updateDeathKnifeExecutions(dt);
     updateIceSpikeFields(dt);
@@ -14714,12 +14715,12 @@ const WEAPON_CODEX_TEXT = {
     drawEnemyZones(ctx);
     drawSpiderWebs(ctx);
     drawSpiderTower(ctx);
-    drawForestVines(ctx);
     drawEnergyTowers(ctx);
     drawBalloons(ctx);
     drawBombs(ctx);
     drawCart(ctx);
     drawEnemies(ctx);
+    drawForestRoots(ctx);
     drawScavengerMonkeys(ctx);
     drawFocusGauntletPunches(ctx);
     drawGrenades(ctx);
@@ -15850,6 +15851,34 @@ const WEAPON_CODEX_TEXT = {
         ctx.strokeStyle = effect.color;
         ctx.lineWidth = 0.06;
         ctx.stroke();
+      } else if (effect.kind === 'forestBurst') {
+        const progress = 1 - alpha;
+        const radius = effect.r * (0.35 + progress * 0.65);
+        ctx.fillStyle = `rgba(80, 130, 55, ${0.1 * alpha})`;
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = effect.color;
+        ctx.lineWidth = 0.06;
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = 0.04;
+        for (let i = 0; i < 10; i += 1) {
+          const angle = (i / 10) * Math.PI * 2 + progress * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(
+            effect.x + Math.cos(angle) * radius * 0.42,
+            effect.y + Math.sin(angle) * radius * 0.42
+          );
+          ctx.quadraticCurveTo(
+            effect.x + Math.cos(angle + 0.3) * radius * 0.78,
+            effect.y + Math.sin(angle + 0.3) * radius * 0.78,
+            effect.x + Math.cos(angle + 0.1) * radius,
+            effect.y + Math.sin(angle + 0.1) * radius
+          );
+          ctx.stroke();
+        }
       } else if (effect.kind === 'beam') {
         ctx.beginPath();
         ctx.moveTo(effect.x1, effect.y1);
@@ -16350,41 +16379,35 @@ const WEAPON_CODEX_TEXT = {
     }
   }
 
-  function drawForestVines(ctx) {
-    for (const field of state.forestVines) {
-      if (field.dead) continue;
-      const alpha = clamp(field.life / field.maxLife, 0, 1);
+  function drawForestRoots(ctx) {
+    for (const root of state.forestRoots) {
+      if (root.timer <= 0) continue;
+      const target = state.enemies.find((enemy) => enemy.id === root.enemyId && !enemy.dead);
+      if (!target || target.isElite || target.isBoss) continue;
+      const alpha = clamp(root.timer / 3, 0, 1);
       ctx.save();
-      ctx.translate(field.x, field.y);
-      ctx.globalAlpha = 0.35 + alpha * 0.5;
-      ctx.fillStyle = 'rgba(80, 130, 55, 0.16)';
-      ctx.beginPath();
-      ctx.arc(0, 0, field.r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.translate(target.x, target.y);
+      ctx.globalAlpha = 0.55 + alpha * 0.4;
       ctx.strokeStyle = '#8ee06a';
-      ctx.lineWidth = 0.06;
-      ctx.beginPath();
-      ctx.arc(0, 0, field.r, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.lineWidth = 0.045;
-      for (let i = 0; i < 12; i += 1) {
-        const angle = (i / 12) * Math.PI * 2;
-        const inner = 0.7 + (i % 3) * 0.35;
+      ctx.lineWidth = 0.035;
+      for (let i = 0; i < 6; i += 1) {
+        const spread = (i - 2.5) / 2.5;
+        const startX = spread * target.r * 0.45;
         ctx.beginPath();
-        ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+        ctx.moveTo(startX, target.r * 0.12);
         ctx.quadraticCurveTo(
-          Math.cos(angle + 0.4) * (inner + 1.4),
-          Math.sin(angle + 0.4) * (inner + 1.4),
-          Math.cos(angle + 0.12) * field.r,
-          Math.sin(angle + 0.12) * field.r
+          spread * target.r * 0.8,
+          target.r * 0.55,
+          spread * target.r * 1.05,
+          target.r + 0.16
         );
         ctx.stroke();
       }
       ctx.fillStyle = '#b6f28c';
-      for (let i = 0; i < 8; i += 1) {
-        const angle = (i / 8) * Math.PI * 2 + 0.2;
+      for (let i = 0; i < 4; i += 1) {
+        const x = ((i - 1.5) / 1.5) * target.r * 0.65;
         ctx.beginPath();
-        ctx.arc(Math.cos(angle) * field.r * 0.72, Math.sin(angle) * field.r * 0.72, 0.06, 0, Math.PI * 2);
+        ctx.ellipse(x, target.r + 0.1, 0.055, 0.028, 0.45, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
