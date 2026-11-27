@@ -354,6 +354,20 @@
       desc: '损失生命值时向 12 个方向发射光芒；主动持续烧血 5 秒。'
     },
     {
+      id: 'scavengerCrown',
+      name: '拾荒者王冠',
+      cooldown: 0.5,
+      activeUnlockLevel: 3,
+      desc: '入场召唤拾荒猴，朝近处敌人投掷竹矛或竹制雷管；靠近后可跟随玩家，熟练 3 可短时间强化跟随猴子的攻击。'
+    },
+    {
+      id: 'spiderTowerBox',
+      name: '蜘蛛塔工具箱',
+      cooldown: 0.3,
+      activeUnlockLevel: 0,
+      desc: '在地图中心建造蜘蛛塔；建成后发送信号切换喷丝、狙杀或蜕壳模式，蜕壳可积累新生强化后续攻击。'
+    },
+    {
       id: 'fleshPillar',
       name: '血肉柱',
       cooldown: 1.2,
@@ -400,7 +414,8 @@
   const COMMUNITY_WEAPON_IDS = [
     'poisonSacBook', 'iceSpikeGun', 'deathDice', 'launcherBox', 'necroBook',
     'durianBox', 'stickyGrenade', 'colorBalloon', 'balloonPump',
-    'starStaff', 'energyTowerBox', 'symbioticVulture', 'bloodGlory'
+    'starStaff', 'energyTowerBox', 'symbioticVulture', 'bloodGlory',
+    'scavengerCrown', 'spiderTowerBox'
   ];
   const SMELTING_WEAPON_IDS = [
     'fleshPillar', 'undertaker', 'chimera',
@@ -566,6 +581,8 @@
     energyTowerBox: { category: '社区', tags: ['建造', '线阱', '减速'], damage: ['能量'], detail: '静止 3 秒建造能量塔，玩家在 7.2 米内时与塔形成能量线，持续伤害线上的敌人；熟练 2 后塔会发射穿透光束，熟练 3 让线上敌人减速 25%。' },
     symbioticVulture: { category: '社区', tags: ['召唤', '斩杀', '恢复'], damage: ['物理'], detail: '召唤共生秃鹫，锁定玩家 5 米内血量最低的敌人高速追击并持续撕咬；目标已损失生命越多伤害越高，击杀有概率为玩家回血。' },
     bloodGlory: { category: '社区', tags: ['反击', '全方位', '尖刺'], damage: ['能量', '尖刺'], detail: '每当你损失生命值，向周围 12 个方向发射细长光芒，对敌人造成能量尖刺伤害，每束独立结算；主动持续烧血 5 秒，熟练 2 结束后回血，熟练 3 低血量时提高自然恢复。' },
+    scavengerCrown: { category: '社区', tags: ['召唤', '成长', '投掷'], damage: ['毒', '物理', '尖刺', '爆炸'], detail: '入场召唤2只拾荒猴，会自动投掷竹矛或竹制雷管；玩家靠近后开始跟随，熟练3可强化跟随猴子的攻击。' },
+    spiderTowerBox: { category: '社区', tags: ['建造', '支援', '成长'], damage: ['毒'], detail: '在地图正中心建造蜘蛛塔，建成后发送信号切换喷丝、狙杀或蜕壳模式；蜕壳积累新生强化后续攻击。' },
     fleshPillar: { category: '熔炼', tags: ['近战', '三重伤害', '爆发', '群爆'], damage: ['物理', '冰', '毒', '爆炸'], detail: '6 米内敌人死亡时积攒血肉原料；每 1.2 秒挥舞血肉柱，对 2.5 米半圆内敌人分别造成物理、冰、毒伤害；主动消耗原料向 8 米内最近敌人发射血肉弹，爆炸伤害随距离递减。' },
     undertaker: { category: '熔炼', tags: ['复活', '穿透', '自伤'], damage: ['能量', '真实'], detail: '每 4.8 秒失去 1HP；每秒发射缓慢、高穿透的灵魂球造成能量真实伤害；主动静止吟唱建造墓碑，致命伤时优先传送到墓碑复活。' },
     chimera: { category: '熔炼', tags: ['召唤', '协同'], damage: ['能量', '尖刺'], detail: '每存在一只幻造兽，玩家生命上限 -5；主动召唤幻造兽，幻造兽跟随玩家并自动发射高穿透幻造尖刺，每次射击后向随机方向跳跃。' },
@@ -973,6 +990,26 @@ const WEAPON_CODEX_TEXT = {
       "光芒长度提高至5.5米，伤害提高至15。",
       "主动持续时间结束后恢复6HP。",
       "生命值低于30时，自然生命恢复+0.2/s。"
+    ]
+  },
+  "scavengerCrown": {
+    "passive": "入场时在地图随机位置召唤2只拾荒猴；拾荒猴没有生命值，不会被敌方攻击或锁定。拾荒猴每1.2秒朝自身6米内最近的敌人随机投掷竹矛（75%）或竹制雷管（25%）。竹矛造成16点毒系尖刺伤害；竹制雷管碰到敌人或到期时爆炸，半径2.5米，造成22-11点物理爆炸伤害。玩家进入猴子1.5米内后猴子开始跟随，并在猴子位置显示黄色扩散圆环；跟随时距离超过1.5米会追赶玩家，进入1.5米内后会在玩家周围随机走动，避免重叠。地图上每60秒随机刷新1只拾荒猴。",
+    "auto": "无。",
+    "active": "熟练3级解锁：所有正在跟随玩家的拾荒猴攻击间隔变为1/3，持续6秒，冷却30秒。未跟随的猴子不受影响。",
+    "levels": [
+      "拾荒猴的刷新间隔降低至50秒。",
+      "拾荒猴的攻击间隔降低至1秒。",
+      "获得主动技能：跟随中的拾荒猴攻击间隔/3，持续6秒，冷却30秒。"
+    ]
+  },
+  "spiderTowerBox": {
+    "passive": "在地图正中心生成半径2米的高塔地基；玩家站在地基内会持续建造，离开不重置进度。累计建造60秒后成为蜘蛛塔，塔没有生命值，也不会被敌方锁定攻击。蜘蛛塔未收到信号时不处于任何模式。",
+    "auto": "无。",
+    "active": "蜘蛛塔建成后，在塔18米内向塔发送信号。1秒内连按1/2/3次，在最后一次按键1秒后切换为喷丝/狙杀/蜕壳模式。喷丝模式每0.6秒攻击18米内随机敌人，造成(24+8×新生)毒系伤害并生成半径3米、持续6秒的蜘蛛网；网内敌人减速40%，每0.5秒受到(3+新生)毒系持续伤害，离开网后立即移除。狙杀模式每3秒对18米内生命值最高的敌人造成(240+80×新生)毒系伤害，并永久减速25%。蜕壳模式5秒后变回地基并增加1层新生；蜕壳等待期间仍可接收信号，用1/2次信号可取消蜕壳并切换喷丝/狙杀，3次信号会重新计时。",
+    "levels": [
+      "蜘蛛塔的建造时间降低至50秒。",
+      "蜘蛛塔的建造时间降低至40秒。",
+      "蜘蛛塔初始获得1层新生。"
     ]
   },
   "fleshPillar": {
@@ -2226,6 +2263,9 @@ const WEAPON_CODEX_TEXT = {
     launchers: [],
     energyTowers: [],
     vulture: null,
+    monkeys: [],
+    spiderTower: null,
+    spiderWebs: [],
     chimeras: [],
     tombstone: null,
     mushroomClusters: [],
@@ -5064,6 +5104,9 @@ const WEAPON_CODEX_TEXT = {
     state.launchers = [];
     state.energyTowers = [];
     state.vulture = null;
+    state.monkeys = [];
+    state.spiderTower = null;
+    state.spiderWebs = [];
     state.chimeras = [];
     state.tombstone = null;
     state.mushroomClusters = [];
@@ -5158,6 +5201,9 @@ const WEAPON_CODEX_TEXT = {
     state.launchers = [];
     state.energyTowers = [];
     state.vulture = null;
+    state.monkeys = [];
+    state.spiderTower = null;
+    state.spiderWebs = [];
     state.chimeras = [];
     state.tombstone = null;
     state.mushroomClusters = [];
@@ -5695,6 +5741,9 @@ const WEAPON_CODEX_TEXT = {
           timer: 0,
           activeTimer: 0,
           activeCooldown: 0,
+          monkeySpawnTimer: 0,
+          monkeyFrenzyTimer: 0,
+          monkeyInitialized: false,
           bloodTickTimer: 0,
           placeTimer: 0,
           targetId: null,
@@ -6556,6 +6605,12 @@ const WEAPON_CODEX_TEXT = {
         case 'bloodGlory':
           updateBloodGloryWeapon(weapon, dt);
           break;
+        case 'scavengerCrown':
+          updateScavengerCrownWeapon(weapon, dt);
+          break;
+        case 'spiderTowerBox':
+          updateSpiderTowerWeapon(weapon, dt);
+          break;
         case 'fleshPillar':
           updateFleshPillarWeapon(weapon, dt);
           break;
@@ -6798,6 +6853,12 @@ const WEAPON_CODEX_TEXT = {
         break;
       case 'waterShuriken':
         activateWaterShuriken(weapon);
+        break;
+      case 'scavengerCrown':
+        activateScavengerCrown(weapon);
+        break;
+      case 'spiderTowerBox':
+        activateSpiderTower(weapon);
         break;
       default:
         break;
@@ -9981,6 +10042,474 @@ const WEAPON_CODEX_TEXT = {
   // 熔炼武器：血肉柱 / 送葬人 / 幻造兽
   // ============================================================
 
+  function randomScavengerMonkeyPoint() {
+    const player = state.player;
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      const x = 2 + Math.random() * (WORLD.w - 4);
+      const y = 2 + Math.random() * (WORLD.h - 4);
+      if (player && dist2(x, y, player.x, player.y) < 4) continue;
+      if (state.monkeys.some((monkey) => dist2(x, y, monkey.x, monkey.y) < 4)) continue;
+      if (state.spiderTower && dist2(x, y, state.spiderTower.x, state.spiderTower.y) < 9) continue;
+      if (state.ruins.some((ruin) => dist2(x, y, ruin.x, ruin.y) < (ruin.r + 0.6) ** 2)) continue;
+      return { x, y };
+    }
+    return {
+      x: 2 + Math.random() * (WORLD.w - 4),
+      y: 2 + Math.random() * (WORLD.h - 4)
+    };
+  }
+
+  function spawnScavengerMonkey() {
+    const point = randomScavengerMonkeyPoint();
+    state.monkeys.push({
+      id: nextEntityId++,
+      x: point.x,
+      y: point.y,
+      r: 0.28,
+      following: false,
+      attackTimer: 0.4,
+      facingAngle: 0,
+      wanderAngle: Math.random() * Math.PI * 2,
+      wanderRadius: 0.55 + Math.random() * 0.7,
+      wanderTimer: 0.4 + Math.random() * 0.8
+    });
+  }
+
+  function chooseMonkeyWanderTarget(monkey, player) {
+    for (let attempt = 0; attempt < 14; attempt += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 0.45 + Math.random() * 0.85;
+      const x = player.x + Math.cos(angle) * radius;
+      const y = player.y + Math.sin(angle) * radius;
+      const clear = state.monkeys.every((other) => (
+        other === monkey ||
+        !other.following ||
+        dist2(x, y, other.x, other.y) >= 0.55 * 0.55
+      ));
+      if (!clear) continue;
+      monkey.wanderAngle = angle;
+      monkey.wanderRadius = radius;
+      monkey.wanderTimer = 0.6 + Math.random() * 1.2;
+      return;
+    }
+    monkey.wanderAngle = Math.random() * Math.PI * 2;
+    monkey.wanderRadius = 0.65 + Math.random() * 0.65;
+    monkey.wanderTimer = 0.6 + Math.random() * 1.2;
+  }
+
+  function clampMonkeyFollowPosition(monkey, player) {
+    const dx = monkey.x - player.x;
+    const dy = monkey.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance > 1.5) {
+      monkey.x = player.x + (dx / distance) * 1.5;
+      monkey.y = player.y + (dy / distance) * 1.5;
+    }
+    monkey.x = clamp(monkey.x, monkey.r, WORLD.w - monkey.r);
+    monkey.y = clamp(monkey.y, monkey.r, WORLD.h - monkey.r);
+  }
+
+  function updateScavengerCrownWeapon(weapon, dt) {
+    const player = state.player;
+    weapon.activeCooldown = Math.max(0, weapon.activeCooldown - dt);
+    weapon.monkeyFrenzyTimer = Math.max(0, (weapon.monkeyFrenzyTimer || 0) - dt);
+    if (!weapon.monkeyInitialized) {
+      weapon.monkeyInitialized = true;
+      spawnScavengerMonkey();
+      spawnScavengerMonkey();
+      weapon.monkeySpawnTimer = weapon.level >= 1 ? 50 : 60;
+    }
+
+    weapon.monkeySpawnTimer = Math.max(0, (weapon.monkeySpawnTimer || 0) - dt);
+    if (weapon.monkeySpawnTimer <= 0) {
+      spawnScavengerMonkey();
+      weapon.monkeySpawnTimer += weapon.level >= 1 ? 50 : 60;
+    }
+
+    const baseInterval = weapon.level >= 2 ? 1 : 1.2;
+    for (const monkey of state.monkeys) {
+      const dx = player.x - monkey.x;
+      const dy = player.y - monkey.y;
+      const distance = Math.hypot(dx, dy);
+      if (!monkey.following && distance <= 1.5) {
+        monkey.following = true;
+        monkey.wanderTimer = 0;
+        addEffect({
+          kind: 'followRing',
+          x: monkey.x,
+          y: monkey.y,
+          r: 0.28,
+          rMax: 0.95,
+          life: 0.5,
+          maxLife: 0.5,
+          color: '#ffd166'
+        });
+      }
+
+      if (monkey.following) {
+        if (distance > 1.5) {
+          const step = Math.min(distance - 1.5, 4 * dt);
+          monkey.x += (dx / distance) * step;
+          monkey.y += (dy / distance) * step;
+          monkey.facingAngle = Math.atan2(dy, dx);
+        } else {
+          monkey.wanderTimer = Math.max(0, (monkey.wanderTimer || 0) - dt);
+          if (monkey.wanderTimer <= 0) chooseMonkeyWanderTarget(monkey, player);
+          const angle = monkey.wanderAngle || 0;
+          const radius = monkey.wanderRadius || 0.8;
+          const targetX = player.x + Math.cos(angle) * radius;
+          const targetY = player.y + Math.sin(angle) * radius;
+          const wanderX = targetX - monkey.x;
+          const wanderY = targetY - monkey.y;
+          const wanderDistance = Math.hypot(wanderX, wanderY);
+          if (wanderDistance > 0.08) {
+            const step = Math.min(wanderDistance, 1.1 * dt);
+            monkey.x += (wanderX / wanderDistance) * step;
+            monkey.y += (wanderY / wanderDistance) * step;
+            monkey.facingAngle = Math.atan2(wanderY, wanderX);
+          }
+        }
+        clampMonkeyFollowPosition(monkey, player);
+      }
+
+      const frenzy = weapon.monkeyFrenzyTimer > 0 && monkey.following;
+      const interval = frenzy ? baseInterval / 3 : baseInterval;
+      monkey.attackTimer = Math.max(0, (monkey.attackTimer || 0) - dt);
+      if (monkey.attackTimer > 0) continue;
+      const target = nearestEnemy(monkey.x, monkey.y, 6);
+      if (!target) {
+        monkey.attackTimer = 0.2;
+        continue;
+      }
+      monkey.facingAngle = Math.atan2(target.y - monkey.y, target.x - monkey.x);
+      fireScavengerProjectile(monkey, target);
+      monkey.attackTimer = interval;
+    }
+
+    const followers = state.monkeys.filter((monkey) => monkey.following);
+    for (let i = 0; i < followers.length; i += 1) {
+      for (let j = i + 1; j < followers.length; j += 1) {
+        const first = followers[i];
+        const second = followers[j];
+        const dx = second.x - first.x;
+        const dy = second.y - first.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance >= 0.5 || distance < 0.0001) continue;
+        const push = (0.5 - distance) * 0.5;
+        const nx = dx / distance;
+        const ny = dy / distance;
+        first.x -= nx * push;
+        first.y -= ny * push;
+        second.x += nx * push;
+        second.y += ny * push;
+        clampMonkeyFollowPosition(first, player);
+        clampMonkeyFollowPosition(second, player);
+      }
+    }
+  }
+
+  function activateScavengerCrown(weapon) {
+    if (weapon.activeCooldown > 0) return;
+    weapon.monkeyFrenzyTimer = 6;
+    weapon.activeCooldown = 30;
+    const baseInterval = weapon.level >= 2 ? 1 : 1.2;
+    for (const monkey of state.monkeys) {
+      if (!monkey.following) continue;
+      monkey.attackTimer = Math.min(monkey.attackTimer || 0, baseInterval / 3);
+    }
+    addDamageNumber(state.player.x, state.player.y - 0.85, '拾荒者狂暴', '#ffd166');
+  }
+
+  function fireScavengerProjectile(monkey, target) {
+    const angle = Math.atan2(target.y - monkey.y, target.x - monkey.x);
+    const bomb = Math.random() < 0.25;
+    if (bomb) {
+      state.projectiles.push({
+        kind: 'monkeyBomb',
+        x: monkey.x,
+        y: monkey.y,
+        r: 0.14,
+        vx: Math.cos(angle) * 4,
+        vy: Math.sin(angle) * 4,
+        life: 1,
+        damageMax: 22,
+        damageMin: 11,
+        radius: 2.5,
+        sourceId: 'scavengerCrown',
+        dead: false
+      });
+      return;
+    }
+    state.projectiles.push({
+      kind: 'monkeySpear',
+      x: monkey.x,
+      y: monkey.y,
+      r: 0.09,
+      vx: Math.cos(angle) * 8,
+      vy: Math.sin(angle) * 8,
+      life: 1,
+      damage: 16,
+      pierce: 3,
+      sourceId: 'scavengerCrown',
+      hitIds: new Set(),
+      dead: false
+    });
+  }
+
+  function explodeMonkeyBomb(projectile) {
+    if (!projectile || projectile.dead) return;
+    projectile.dead = true;
+    for (const enemy of state.enemies) {
+      if (!isEnemyTargetable(enemy)) continue;
+      const distance = Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y);
+      if (distance > projectile.radius) continue;
+      const damage = projectile.damageMax
+        - (projectile.damageMax - projectile.damageMin) * (distance / projectile.radius);
+      damageEnemy(enemy, damage, 'physical', false, projectile.sourceId || 'scavengerCrown', { explosion: true });
+    }
+    addEffect({
+      kind: 'ring',
+      x: projectile.x,
+      y: projectile.y,
+      r: projectile.radius,
+      life: 0.3,
+      maxLife: 0.3,
+      color: '#d8a866'
+    });
+  }
+
+  function createSpiderTower(weapon) {
+    const buildTime = weapon.level >= 2 ? 40 : weapon.level >= 1 ? 50 : 60;
+    state.spiderTower = {
+      x: WORLD.w / 2,
+      y: WORLD.h / 2,
+      r: 2,
+      buildTime,
+      buildProgress: 0,
+      built: false,
+      mode: 'idle',
+      newborn: weapon.level >= 3 ? 1 : 0,
+      attackTimer: 0,
+      signalCount: 0,
+      signalTimer: 0,
+      moltTimer: 0
+    };
+  }
+
+  function updateSpiderTowerWeapon(weapon, dt) {
+    const player = state.player;
+    if (!state.spiderTower) createSpiderTower(weapon);
+    const tower = state.spiderTower;
+
+    if (!tower.built) {
+      if (dist2(player.x, player.y, tower.x, tower.y) <= tower.r * tower.r) {
+        tower.buildProgress = Math.min(tower.buildTime, tower.buildProgress + dt);
+        if (tower.buildProgress >= tower.buildTime) {
+          tower.built = true;
+          tower.mode = 'idle';
+          tower.attackTimer = 0;
+          tower.signalCount = 0;
+          tower.signalTimer = 0;
+          tower.moltTimer = 0;
+          addDamageNumber(tower.x, tower.y - 1.8, '蜘蛛塔建成', '#d9b8ff');
+          addEffect({
+            kind: 'ring',
+            x: tower.x,
+            y: tower.y,
+            r: tower.r,
+            life: 0.5,
+            maxLife: 0.5,
+            color: '#d9b8ff'
+          });
+        }
+      }
+      return;
+    }
+
+    if (tower.signalTimer > 0) {
+      tower.signalTimer = Math.max(0, tower.signalTimer - dt);
+      if (tower.signalTimer <= 0 && tower.signalCount > 0) {
+        applySpiderTowerSignal(weapon, tower);
+      }
+    }
+
+    if (tower.mode === 'molt') {
+      tower.moltTimer = Math.max(0, tower.moltTimer - dt);
+      if (tower.moltTimer <= 0) {
+        tower.built = false;
+        tower.mode = 'idle';
+        tower.buildProgress = 0;
+        tower.attackTimer = 0;
+        tower.signalCount = 0;
+        tower.signalTimer = 0;
+        tower.newborn += 1;
+        addDamageNumber(tower.x, tower.y - 1.8, `蜕壳完成 · 新生 ${tower.newborn}`, '#f0c75e');
+        addEffect({
+          kind: 'ring',
+          x: tower.x,
+          y: tower.y,
+          r: tower.r,
+          life: 0.6,
+          maxLife: 0.6,
+          color: '#f0c75e'
+        });
+      }
+      return;
+    }
+
+    if (tower.mode === 'spray') {
+      tower.attackTimer -= dt;
+      if (tower.attackTimer > 0) return;
+      const candidates = state.enemies.filter((enemy) => (
+        isEnemyTargetable(enemy) && dist2(tower.x, tower.y, enemy.x, enemy.y) <= 18 * 18
+      ));
+      if (candidates.length === 0) {
+        tower.attackTimer = 0.3;
+        return;
+      }
+      tower.attackTimer += 0.6;
+      const target = candidates[Math.floor(Math.random() * candidates.length)];
+      damageEnemy(target, 24 + 8 * tower.newborn, 'poison', false, 'spiderTowerBox');
+      state.spiderWebs.push({
+        id: nextEntityId++,
+        x: target.x,
+        y: target.y,
+        r: 3,
+        life: 6,
+        maxLife: 6,
+        newborn: tower.newborn,
+        dead: false
+      });
+      addEffect({
+        kind: 'beam',
+        x1: tower.x,
+        y1: tower.y,
+        x2: target.x,
+        y2: target.y,
+        life: 0.18,
+        maxLife: 0.18,
+        color: '#d8c2ff'
+      });
+      addEffect({
+        kind: 'ring',
+        x: target.x,
+        y: target.y,
+        r: 0.8,
+        life: 0.25,
+        maxLife: 0.25,
+        color: '#c7e8a8'
+      });
+      return;
+    }
+
+    if (tower.mode === 'snipe') {
+      tower.attackTimer -= dt;
+      if (tower.attackTimer > 0) return;
+      const target = highestHpEnemyWithin(tower.x, tower.y, 18);
+      if (!target) {
+        tower.attackTimer = 0.5;
+        return;
+      }
+      tower.attackTimer = 3;
+      damageEnemy(target, 240 + 80 * tower.newborn, 'poison', false, 'spiderTowerBox');
+      if (!target.dead && !target.immuneSlow) target.spiderTowerSlow = true;
+      addEffect({
+        kind: 'beam',
+        x1: tower.x,
+        y1: tower.y,
+        x2: target.x,
+        y2: target.y,
+        life: 0.3,
+        maxLife: 0.3,
+        color: '#ffb6d9'
+      });
+    }
+  }
+
+  function activateSpiderTower(weapon) {
+    const tower = state.spiderTower;
+    const player = state.player;
+    if (!tower || !tower.built) {
+      addDamageNumber(player.x, player.y - 0.85, '蜘蛛塔尚未建成', '#8ea3c4');
+      return;
+    }
+    if (dist2(player.x, player.y, tower.x, tower.y) > 18 * 18) {
+      addDamageNumber(player.x, player.y - 0.85, '距离过远，无法发送信号', '#8ea3c4');
+      return;
+    }
+    tower.signalCount = tower.signalTimer > 0
+      ? Math.min(3, tower.signalCount + 1)
+      : 1;
+    tower.signalTimer = 1;
+    addDamageNumber(player.x, player.y - 0.85, `信号 ${tower.signalCount}/3`, '#d9b8ff');
+  }
+
+  function applySpiderTowerSignal(weapon, tower) {
+    const player = state.player;
+    const count = tower.signalCount;
+    tower.signalCount = 0;
+    tower.signalTimer = 0;
+    if (count >= 3) {
+      tower.mode = 'molt';
+      tower.moltTimer = 5;
+      tower.attackTimer = 0;
+      addDamageNumber(player.x, player.y - 0.95, '蜘蛛塔切换为蜕壳模式', '#f0c75e');
+      return;
+    }
+    if (count === 2) {
+      tower.mode = 'snipe';
+      tower.moltTimer = 0;
+      tower.attackTimer = 3;
+      addDamageNumber(player.x, player.y - 0.95, '蜘蛛塔切换为狙杀模式', '#ffb6d9');
+      return;
+    }
+    tower.mode = 'spray';
+    tower.moltTimer = 0;
+    tower.attackTimer = 0.6;
+    addDamageNumber(player.x, player.y - 0.95, '蜘蛛塔切换为喷丝模式', '#c7e8a8');
+  }
+
+  function updateSpiderWebs(dt) {
+    for (const web of state.spiderWebs) {
+      if (web.dead) continue;
+      web.life -= dt;
+      if (web.life <= 0) web.dead = true;
+    }
+    state.spiderWebs = state.spiderWebs.filter((web) => !web.dead);
+
+    for (const enemy of state.enemies) {
+      if (enemy.dead) continue;
+      let inWeb = false;
+      let poisonDamage = 0;
+      for (const web of state.spiderWebs) {
+        if (web.dead) continue;
+        if (dist2(enemy.x, enemy.y, web.x, web.y) <= web.r * web.r) {
+          inWeb = true;
+          poisonDamage = Math.max(poisonDamage, 3 + web.newborn);
+        }
+      }
+      if (!inWeb) {
+        enemy.spiderWebSlow = false;
+        enemy.spiderWebPoison = null;
+        continue;
+      }
+      enemy.spiderWebSlow = !enemy.immuneSlow;
+      if (!enemy.immuneDot) {
+        if (!enemy.spiderWebPoison) {
+          enemy.spiderWebPoison = {
+            timer: 0.5,
+            damage: poisonDamage,
+            sourceId: 'spiderTowerBox'
+          };
+        } else {
+          enemy.spiderWebPoison.damage = Math.max(enemy.spiderWebPoison.damage, poisonDamage);
+        }
+      } else {
+        enemy.spiderWebPoison = null;
+      }
+    }
+  }
+
   function updateFleshPillarWeapon(weapon, dt) {
     const player = state.player;
     weapon.activeCooldown = Math.max(0, weapon.activeCooldown - dt);
@@ -11756,6 +12285,21 @@ const WEAPON_CODEX_TEXT = {
         }
       }
 
+      if (enemy.spiderWebPoison && !enemy.dead) {
+        enemy.spiderWebPoison.timer -= dt;
+        if (enemy.spiderWebPoison.timer <= 0) {
+          enemy.spiderWebPoison.timer += 0.5;
+          damageEnemy(
+            enemy,
+            enemy.spiderWebPoison.damage,
+            'poison',
+            false,
+            enemy.spiderWebPoison.sourceId || 'spiderTowerBox',
+            { dot: true }
+          );
+        }
+      }
+
       if (enemy.burn) {
         enemy.burn.timer -= dt;
         if (enemy.burn.timer <= 0) {
@@ -11858,7 +12402,10 @@ const WEAPON_CODEX_TEXT = {
 
         if (moveDirection !== 0) {
           const step = enemy.speed * enemy.speedMultiplier * enemy.slowFactor
-            * (enemy.energyLineSlow ? 0.75 : 1) * dt * moveDirection;
+            * (enemy.energyLineSlow ? 0.75 : 1)
+            * (enemy.spiderWebSlow ? 0.6 : 1)
+            * (enemy.spiderTowerSlow ? 0.75 : 1)
+            * dt * moveDirection;
           enemy.x += (dx / distance) * step;
           enemy.y += (dy / distance) * step;
           enemy.x = clamp(enemy.x, enemy.r, WORLD.w - enemy.r);
@@ -12876,6 +13423,11 @@ const WEAPON_CODEX_TEXT = {
         continue;
       }
 
+      if (projectile.kind === 'monkeyBomb' && projectile.life <= 0) {
+        explodeMonkeyBomb(projectile);
+        continue;
+      }
+
       if (
         projectile.life <= 0 ||
         projectile.x < -1 || projectile.x > WORLD.w + 1 ||
@@ -13136,6 +13688,29 @@ const WEAPON_CODEX_TEXT = {
             break;
           }
         }
+      } else if (projectile.kind === 'monkeySpear') {
+        for (const enemy of state.enemies) {
+          if (!isEnemyTargetable(enemy) || projectile.hitIds.has(enemy.id)) continue;
+          const hitDistance = projectile.r + enemy.r;
+          if (dist2(projectile.x, projectile.y, enemy.x, enemy.y) <= hitDistance * hitDistance) {
+            projectile.hitIds.add(enemy.id);
+            damageEnemy(enemy, projectile.damage, 'poison', false, projectile.sourceId || 'scavengerCrown', { spike: true });
+            projectile.pierce -= 1;
+            if (projectile.pierce <= 0) {
+              projectile.dead = true;
+              break;
+            }
+          }
+        }
+      } else if (projectile.kind === 'monkeyBomb') {
+        for (const enemy of state.enemies) {
+          if (!isEnemyTargetable(enemy)) continue;
+          const hitDistance = projectile.r + enemy.r;
+          if (dist2(projectile.x, projectile.y, enemy.x, enemy.y) <= hitDistance * hitDistance) {
+            explodeMonkeyBomb(projectile);
+            break;
+          }
+        }
       } else if (projectile.kind === 'soulOrb') {
         for (const enemy of state.enemies) {
           if (!isEnemyTargetable(enemy) || projectile.hitIds.has(enemy.id)) continue;
@@ -13301,6 +13876,7 @@ const WEAPON_CODEX_TEXT = {
     updateMushroomForests(dt);
     updateEnergyTowers(dt);
     updateSpawner(dt);
+    updateSpiderWebs(dt);
     updateEnemies(dt);
     updateDeathKnifeExecutions(dt);
     updateIceSpikeFields(dt);
@@ -13826,6 +14402,37 @@ const WEAPON_CODEX_TEXT = {
           card.state.textContent = '释放就绪';
           card.state.className = 'weapon-state ready';
         }
+      } else if (weapon.id === 'scavengerCrown') {
+        if (weapon.monkeyFrenzyTimer > 0) {
+          card.state.textContent = `狂暴 ${Math.ceil(weapon.monkeyFrenzyTimer)}s`;
+          card.state.className = 'weapon-state ready';
+        } else if (weapon.activeCooldown > 0) {
+          card.state.textContent = `冷却 ${Math.ceil(weapon.activeCooldown)}s`;
+          card.state.className = 'weapon-state cooling';
+        } else {
+          card.state.textContent = `猴子 ${state.monkeys.length} · ${Math.ceil(weapon.monkeySpawnTimer || 0)}s`;
+          card.state.className = 'weapon-state ready';
+        }
+      } else if (weapon.id === 'spiderTowerBox') {
+        const tower = state.spiderTower;
+        if (!tower) {
+          card.state.textContent = '地基准备';
+          card.state.className = 'weapon-state';
+        } else if (!tower.built) {
+          card.state.textContent = `建造 ${Math.floor(tower.buildProgress)}/${tower.buildTime}s`;
+          card.state.className = 'weapon-state cooling';
+        } else if (tower.mode === 'molt') {
+          const signalText = tower.signalTimer > 0 ? ` · 信号${tower.signalCount}/3` : ' · 可发信号';
+          card.state.textContent = `蜕壳 ${Math.ceil(tower.moltTimer)}s${signalText}`;
+          card.state.className = 'weapon-state cooling';
+        } else if (tower.signalTimer > 0) {
+          card.state.textContent = `信号 ${tower.signalCount}/3`;
+          card.state.className = 'weapon-state ready';
+        } else {
+          const labels = { idle: '待命', spray: '喷丝', snipe: '狙杀' };
+          card.state.textContent = `${labels[tower.mode] || '待命'} · 新生${tower.newborn}`;
+          card.state.className = 'weapon-state ready';
+        }
       } else if (weapon.id === 'fleshPillar') {
         const cap = weapon.level >= 3 ? 25 : 20;
         card.state.textContent = `血肉原料 ${weapon.fleshStacks}/${cap}`;
@@ -14048,11 +14655,14 @@ const WEAPON_CODEX_TEXT = {
     drawSacs(ctx);
     drawLaunchers(ctx);
     drawEnemyZones(ctx);
+    drawSpiderWebs(ctx);
+    drawSpiderTower(ctx);
     drawEnergyTowers(ctx);
     drawBalloons(ctx);
     drawBombs(ctx);
     drawCart(ctx);
     drawEnemies(ctx);
+    drawScavengerMonkeys(ctx);
     drawFocusGauntletPunches(ctx);
     drawGrenades(ctx);
     drawUndeadGuard(ctx);
@@ -14531,6 +15141,30 @@ const WEAPON_CODEX_TEXT = {
           ctx.strokeStyle = 'rgba(160, 220, 255, 0.55)';
           ctx.stroke();
         }
+      }
+
+      if (weapon.id === 'scavengerCrown') {
+        ctx.save();
+        ctx.translate(0, -player.r - 0.2);
+        ctx.fillStyle = '#e8b84f';
+        ctx.strokeStyle = '#fff0b0';
+        ctx.lineWidth = 0.025;
+        ctx.beginPath();
+        ctx.moveTo(-0.22, 0.08);
+        ctx.lineTo(-0.18, -0.13);
+        ctx.lineTo(-0.08, -0.01);
+        ctx.lineTo(0, -0.18);
+        ctx.lineTo(0.08, -0.01);
+        ctx.lineTo(0.18, -0.13);
+        ctx.lineTo(0.22, 0.08);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#b85a54';
+        ctx.beginPath();
+        ctx.arc(0, 0.02, 0.035, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
     }
 
@@ -15145,6 +15779,19 @@ const WEAPON_CODEX_TEXT = {
         ctx.strokeStyle = effect.color;
         ctx.lineWidth = 0.08;
         ctx.stroke();
+      } else if (effect.kind === 'followRing') {
+        const progress = 1 - alpha;
+        ctx.beginPath();
+        ctx.arc(
+          effect.x,
+          effect.y,
+          effect.r + (effect.rMax - effect.r) * progress,
+          0,
+          Math.PI * 2
+        );
+        ctx.strokeStyle = effect.color;
+        ctx.lineWidth = 0.06;
+        ctx.stroke();
       } else if (effect.kind === 'beam') {
         ctx.beginPath();
         ctx.moveTo(effect.x1, effect.y1);
@@ -15641,6 +16288,176 @@ const WEAPON_CODEX_TEXT = {
         ctx.stroke();
       }
 
+      ctx.restore();
+    }
+  }
+
+  function drawSpiderWebs(ctx) {
+    for (const web of state.spiderWebs) {
+      if (web.dead) continue;
+      const alpha = clamp(web.life / web.maxLife, 0, 1) * 0.42;
+      ctx.save();
+      ctx.translate(web.x, web.y);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = 'rgba(202, 226, 184, 0.12)';
+      ctx.beginPath();
+      ctx.arc(0, 0, web.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#d8e8c2';
+      ctx.lineWidth = 0.025;
+      for (let i = 0; i < 3; i += 1) {
+        ctx.beginPath();
+        ctx.arc(0, 0, web.r * (0.35 + i * 0.22), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      for (let i = 0; i < 8; i += 1) {
+        const angle = (i / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle) * web.r, Math.sin(angle) * web.r);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawSpiderTower(ctx) {
+    const tower = state.spiderTower;
+    if (!tower) return;
+    ctx.save();
+    ctx.translate(tower.x, tower.y);
+
+    if (!tower.built) {
+      ctx.fillStyle = 'rgba(93, 74, 58, 0.35)';
+      ctx.beginPath();
+      ctx.arc(0, 0, tower.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(214, 180, 128, 0.7)';
+      ctx.lineWidth = 0.06;
+      ctx.beginPath();
+      ctx.arc(0, 0, tower.r, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let i = 0; i < 8; i += 1) {
+        const angle = (i / 8) * Math.PI * 2;
+        ctx.fillStyle = '#635044';
+        ctx.beginPath();
+        ctx.arc(Math.cos(angle) * 1.65, Math.sin(angle) * 1.65, 0.18, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const progress = clamp(tower.buildProgress / tower.buildTime, 0, 1);
+      ctx.strokeStyle = '#d8b46e';
+      ctx.lineWidth = 0.1;
+      ctx.beginPath();
+      ctx.arc(0, 0, 1.82, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+      ctx.stroke();
+      ctx.fillStyle = '#d8b46e';
+      ctx.beginPath();
+      ctx.arc(0, 0, 0.55, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    const modeColor = tower.mode === 'spray'
+      ? '#b9e59c'
+      : tower.mode === 'snipe'
+        ? '#ffb6d9'
+        : tower.mode === 'molt'
+          ? '#f0c75e'
+          : '#bda8d8';
+    ctx.fillStyle = 'rgba(68, 55, 75, 0.9)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = modeColor;
+    ctx.lineWidth = 0.08;
+    ctx.stroke();
+    for (let i = 0; i < 8; i += 1) {
+      const angle = (i / 8) * Math.PI * 2;
+      ctx.fillStyle = '#8f7a9a';
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * 1.05, Math.sin(angle) * 1.05, 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const pulse = tower.mode === 'molt' ? 0.5 + 0.5 * Math.sin(performance.now() / 120) : 0.55;
+    ctx.strokeStyle = modeColor;
+    ctx.globalAlpha = 0.35 + pulse * 0.3;
+    for (let i = 0; i < 8; i += 1) {
+      const angle = (i / 8) * Math.PI * 2;
+      ctx.lineWidth = 0.08;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(angle) * 0.35, Math.sin(angle) * 0.35);
+      ctx.quadraticCurveTo(
+        Math.cos(angle + 0.35) * 0.95,
+        Math.sin(angle + 0.35) * 0.95,
+        Math.cos(angle) * 1.25,
+        Math.sin(angle) * 1.25
+      );
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#2b2033';
+    ctx.beginPath();
+    ctx.ellipse(0, 0.05, 0.42, 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5d4668';
+    ctx.beginPath();
+    ctx.ellipse(0, -0.36, 0.28, 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = modeColor;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.arc(side * 0.14, -0.42, 0.055, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#f3e6ff';
+    ctx.beginPath();
+    ctx.arc(0, -0.62, 0.14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5d4668';
+    ctx.beginPath();
+    ctx.arc(0, -0.62, 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawScavengerMonkeys(ctx) {
+    for (const monkey of state.monkeys) {
+      ctx.save();
+      ctx.translate(monkey.x, monkey.y);
+      ctx.rotate(monkey.facingAngle || 0);
+      ctx.strokeStyle = '#8a5d3b';
+      ctx.lineWidth = 0.05;
+      ctx.beginPath();
+      ctx.moveTo(-0.18, 0.03);
+      ctx.quadraticCurveTo(-0.42, 0.12, -0.34, -0.06);
+      ctx.stroke();
+      ctx.fillStyle = '#8a5d3b';
+      ctx.beginPath();
+      ctx.ellipse(0, 0.02, 0.2, 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#c58a58';
+      ctx.beginPath();
+      ctx.arc(0.12, -0.1, 0.13, 0, Math.PI * 2);
+      ctx.fill();
+      for (const side of [-1, 1]) {
+        ctx.fillStyle = '#a66e46';
+        ctx.beginPath();
+        ctx.arc(0.1, -0.1 + side * 0.12, 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#2b1b16';
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(0.17, -0.13 + side * 0.035, 0.018, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#d9b38a';
+      ctx.beginPath();
+      ctx.ellipse(0.25, -0.06, 0.06, 0.045, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
   }
@@ -16476,6 +17293,42 @@ const WEAPON_CODEX_TEXT = {
         ctx.moveTo(projectile.x - Math.cos(angle) * 0.42, projectile.y - Math.sin(angle) * 0.42);
         ctx.lineTo(projectile.x + Math.cos(angle) * 0.12, projectile.y + Math.sin(angle) * 0.12);
         ctx.stroke();
+      } else if (projectile.kind === 'monkeySpear') {
+        const angle = Math.atan2(projectile.vy, projectile.vx);
+        ctx.strokeStyle = '#c89b54';
+        ctx.lineWidth = 0.055;
+        ctx.beginPath();
+        ctx.moveTo(projectile.x - Math.cos(angle) * 0.34, projectile.y - Math.sin(angle) * 0.34);
+        ctx.lineTo(projectile.x + Math.cos(angle) * 0.1, projectile.y + Math.sin(angle) * 0.1);
+        ctx.stroke();
+        ctx.fillStyle = '#a7e36b';
+        ctx.beginPath();
+        ctx.moveTo(projectile.x + Math.cos(angle) * 0.14, projectile.y + Math.sin(angle) * 0.14);
+        ctx.lineTo(projectile.x + Math.cos(angle + 2.5) * 0.08, projectile.y + Math.sin(angle + 2.5) * 0.08);
+        ctx.lineTo(projectile.x + Math.cos(angle - 2.5) * 0.08, projectile.y + Math.sin(angle - 2.5) * 0.08);
+        ctx.closePath();
+        ctx.fill();
+      } else if (projectile.kind === 'monkeyBomb') {
+        const angle = Math.atan2(projectile.vy, projectile.vx);
+        ctx.save();
+        ctx.translate(projectile.x, projectile.y);
+        ctx.rotate(angle);
+        ctx.fillStyle = '#8f6a3e';
+        ctx.fillRect(-0.13, -0.075, 0.26, 0.15);
+        ctx.strokeStyle = '#d8b16a';
+        ctx.lineWidth = 0.02;
+        ctx.strokeRect(-0.13, -0.075, 0.26, 0.15);
+        ctx.strokeStyle = '#ffe28a';
+        ctx.lineWidth = 0.018;
+        ctx.beginPath();
+        ctx.moveTo(0.12, -0.04);
+        ctx.quadraticCurveTo(0.2, -0.12, 0.18, -0.18);
+        ctx.stroke();
+        ctx.fillStyle = '#ffb347';
+        ctx.beginPath();
+        ctx.arc(0.18, -0.18, 0.035, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       } else if (projectile.kind === 'undeadArrow') {
         const angle = Math.atan2(projectile.vy, projectile.vx);
         ctx.strokeStyle = '#a9d7ff';
