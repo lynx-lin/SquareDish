@@ -17273,18 +17273,6 @@ const WEAPON_CODEX_TEXT = {
     for (const projectile of state.projectiles) {
       if (projectile.dead) continue;
 
-      const shadowRadius = Math.max(0.05, (projectile.r || 0.08) + 0.025);
-      const shadowLength = Math.max(0.07, (projectile.r || 0.08) * 1.9);
-      const shadowAngle = Math.atan2(projectile.vy || 0, projectile.vx || 1);
-      ctx.save();
-      ctx.translate(projectile.x, projectile.y);
-      ctx.rotate(shadowAngle);
-      ctx.fillStyle = 'rgba(2, 5, 12, 0.22)';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, shadowLength, shadowRadius, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
       if (projectile.kind === 'arcane') {
         const arcaneAngle = Math.atan2(projectile.vy, projectile.vx);
         ctx.strokeStyle = 'rgba(123, 213, 255, 0.35)';
