@@ -240,11 +240,10 @@
     {
       id: 'forestBoots',
       name: '森林靴',
-      cooldown: 0.5,
-      activeUnlockLevel: 99,
-      noActive: true,
+      cooldown: 25,
+      activeUnlockLevel: 0,
       passiveMoveSpeed: 0.1,
-      desc: '移速+10%，移动时留下伤害并减速敌人的尖刺丛。'
+      desc: '移速+10%，移动时留下伤害并减速敌人的尖刺丛；主动用树藤捆住周围非精英敌人。'
     },
     {
       id: 'bloodKnife',
@@ -565,7 +564,7 @@
     iceStandoff: { category: '老手', tags: ['吟唱', '锁定', '加速'], damage: ['冰'], detail: '吟唱后持续攻击范围内最高血量敌人，同时提高自身移速。' },
     colorCandy: { category: '老手', tags: ['撒糖', '随机', '延迟落地'], damage: ['物理', '冰', '毒', '能量'], detail: '向周围抛撒糖果；飞行碰撞或落地后踩中都会造成随机属性伤害；熟练2选择更优属性，熟练3增加数量与伤害。' },
     deathKnife: { category: '老手', tags: ['积攒', '爆发'], damage: ['能量'], detail: '积攒殒命值，主动消耗全部殒命值对最近敌人造成能量爆发。' },
-    forestBoots: { category: '老手', tags: ['陷阱', '轨迹', '区域'], damage: ['毒', '尖刺'], detail: '被动移速+10%；移动时留下尖刺丛，对经过的敌人造成伤害和减速。' },
+    forestBoots: { category: '老手', tags: ['陷阱', '轨迹', '区域'], damage: ['毒', '尖刺'], detail: '被动移速+10%；移动时留下尖刺丛，对经过的敌人造成伤害和减速；主动用树藤捆住周围非精英敌人并伤害经过者。' },
     bloodKnife: { category: '老手', tags: ['自伤', '环形', '回血'], damage: ['物理'], detail: '消耗生命发射环形飞刀，击杀回血；熟练2消耗血量强化伤害。' },
     cheatCode: { category: '老手', tags: ['锁定', '秒杀', '无敌'], damage: ['能量','真实'], detail: '锁定数秒后秒杀非精英，或重创精英；受到伤害后短暂无敌。' },
     poisonSacBook: { category: '社区', tags: ['召唤', '自爆', '传播'], damage: ['毒', '爆炸', '持续'], detail: '静止吟唱召唤毒胞，毒胞追敌自爆并传播胞毒；被感染的敌人死亡后会变成新的毒胞。' },
@@ -755,7 +754,7 @@ const WEAPON_CODEX_TEXT = {
   "banana": {
     "passive": "奔跑速度×1.1",
     "auto": "每0.7秒向12米内距离玩家最近的敌人发射追踪敌人的香蕉回旋镖，对击中的敌人造成33点物理伤害，穿透1。击中敌人时立即为玩家恢复2点体力。",
-    "active": "立即恢复30点体力。冷却20秒。",
+    "active": "立即恢复50点体力。冷却15秒。",
     "levels": [
       "攻击冷却缩短为0.6秒。",
       "香蕉回旋镖击杀的敌人掉落战利品的概率×1.2",
@@ -835,7 +834,7 @@ const WEAPON_CODEX_TEXT = {
   "forestBoots": {
     "passive": "移动速度提高10%。",
     "auto": "每0.5秒留下一个半径0.3米的尖刺丛，走到尖刺丛上的敌人立刻受到16毒系尖刺伤害，并减速该敌人20%，每个尖刺丛最多能使用3次，用完消失，且最多存在3秒。",
-    "active": "无。",
+    "active": "用树藤捆住半径4米内的所有非精英敌人，使其移动速度降低100%，并对经过树藤的敌人造成30点毒系尖刺伤害，持续3秒。冷却25秒。",
     "levels": [
       "尖刺丛的半径增大至0.4米，使用次数变为4次。",
       "尖刺丛的伤害提高至19。",
@@ -2254,6 +2253,7 @@ const WEAPON_CODEX_TEXT = {
     fruits: [],
     candies: [],
     patches: [],
+    forestVines: [],
     cart: null,
     effects: [],
     bombs: [],
@@ -5095,6 +5095,7 @@ const WEAPON_CODEX_TEXT = {
     state.fruits = [];
     state.candies = [];
     state.patches = [];
+    state.forestVines = [];
     state.cart = null;
     state.effects = [];
     state.bombs = [];
@@ -5192,6 +5193,7 @@ const WEAPON_CODEX_TEXT = {
     state.fruits = [];
     state.candies = [];
     state.patches = [];
+    state.forestVines = [];
     state.cart = null;
     state.effects = [];
     state.bombs = [];
@@ -6725,8 +6727,8 @@ const WEAPON_CODEX_TEXT = {
         break;
       case 'banana':
         if (weapon.activeCooldown <= 0) {
-          state.player.stamina = Math.min(PLAYER.staminaMax, state.player.stamina + 30);
-          weapon.activeCooldown = 20;
+          state.player.stamina = Math.min(PLAYER.staminaMax, state.player.stamina + 50);
+          weapon.activeCooldown = 15;
         }
         break;
       case 'fruitStaff':
@@ -6778,6 +6780,9 @@ const WEAPON_CODEX_TEXT = {
         break;
       case 'deathKnife':
         fireDeathKnife(weapon);
+        break;
+      case 'forestBoots':
+        activateForestBoots(weapon);
         break;
       case 'bloodKnife':
         activateBloodBuff(weapon);
@@ -8430,6 +8435,7 @@ const WEAPON_CODEX_TEXT = {
   }
 
   function updateForestBootsWeapon(weapon, dt) {
+    weapon.activeCooldown = Math.max(0, weapon.activeCooldown - dt);
     weapon.timer -= dt;
     if (weapon.timer > 0) return;
     weapon.timer = 0.5;
@@ -8454,6 +8460,51 @@ const WEAPON_CODEX_TEXT = {
       spikes,
       dead: false
     });
+  }
+
+  function activateForestBoots(weapon) {
+    if (weapon.activeCooldown > 0) return;
+    const player = state.player;
+    weapon.activeCooldown = 25;
+    state.forestVines.push({
+      x: player.x,
+      y: player.y,
+      r: 4,
+      life: 3,
+      maxLife: 3,
+      hitIds: new Set(),
+      dead: false
+    });
+    addEffect({
+      kind: 'ring',
+      x: player.x,
+      y: player.y,
+      r: 4,
+      life: 0.45,
+      maxLife: 0.45,
+      color: '#8ee06a'
+    });
+    addDamageNumber(player.x, player.y - 0.9, '森林藤蔓', '#b6f28c');
+  }
+
+  function updateForestVines(dt) {
+    for (const field of state.forestVines) {
+      if (field.dead) continue;
+      for (const enemy of state.enemies) {
+        if (enemy.dead) continue;
+        if (dist2(field.x, field.y, enemy.x, enemy.y) > (field.r + enemy.r) ** 2) continue;
+        if (!field.hitIds.has(enemy.id)) {
+          field.hitIds.add(enemy.id);
+          damageEnemy(enemy, 30, 'poison', false, 'forestBoots', { spike: true });
+        }
+        if (!enemy.dead && !enemy.isElite && !enemy.isBoss) {
+          applyEnemySlow(enemy, 0, Math.max(0.2, field.life));
+        }
+      }
+      field.life -= dt;
+      if (field.life <= 0) field.dead = true;
+    }
+    state.forestVines = state.forestVines.filter((field) => !field.dead);
   }
 
   function updatePatches(dt) {
@@ -13877,6 +13928,7 @@ const WEAPON_CODEX_TEXT = {
     updateEnergyTowers(dt);
     updateSpawner(dt);
     updateSpiderWebs(dt);
+    updateForestVines(dt);
     updateEnemies(dt);
     updateDeathKnifeExecutions(dt);
     updateIceSpikeFields(dt);
@@ -14391,6 +14443,11 @@ const WEAPON_CODEX_TEXT = {
           ? `建造 ${Math.ceil(weapon.buildTimer)}s`
           : `能量塔 ${state.energyTowers.length}/3`;
         card.state.className = weapon.building ? 'weapon-state cooling' : 'weapon-state ready';
+      } else if (weapon.id === 'forestBoots') {
+        card.state.textContent = weapon.activeCooldown > 0
+          ? `藤蔓 ${Math.ceil(weapon.activeCooldown)}s`
+          : '藤蔓就绪';
+        card.state.className = weapon.activeCooldown > 0 ? 'weapon-state cooling' : 'weapon-state ready';
       } else if (weapon.id === 'bloodGlory') {
         if (weapon.activeTimer > 0) {
           card.state.textContent = `烧血 ${Math.ceil(weapon.activeTimer)}s`;
@@ -14657,6 +14714,7 @@ const WEAPON_CODEX_TEXT = {
     drawEnemyZones(ctx);
     drawSpiderWebs(ctx);
     drawSpiderTower(ctx);
+    drawForestVines(ctx);
     drawEnergyTowers(ctx);
     drawBalloons(ctx);
     drawBombs(ctx);
@@ -16288,6 +16346,47 @@ const WEAPON_CODEX_TEXT = {
         ctx.stroke();
       }
 
+      ctx.restore();
+    }
+  }
+
+  function drawForestVines(ctx) {
+    for (const field of state.forestVines) {
+      if (field.dead) continue;
+      const alpha = clamp(field.life / field.maxLife, 0, 1);
+      ctx.save();
+      ctx.translate(field.x, field.y);
+      ctx.globalAlpha = 0.35 + alpha * 0.5;
+      ctx.fillStyle = 'rgba(80, 130, 55, 0.16)';
+      ctx.beginPath();
+      ctx.arc(0, 0, field.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#8ee06a';
+      ctx.lineWidth = 0.06;
+      ctx.beginPath();
+      ctx.arc(0, 0, field.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 0.045;
+      for (let i = 0; i < 12; i += 1) {
+        const angle = (i / 12) * Math.PI * 2;
+        const inner = 0.7 + (i % 3) * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+        ctx.quadraticCurveTo(
+          Math.cos(angle + 0.4) * (inner + 1.4),
+          Math.sin(angle + 0.4) * (inner + 1.4),
+          Math.cos(angle + 0.12) * field.r,
+          Math.sin(angle + 0.12) * field.r
+        );
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#b6f28c';
+      for (let i = 0; i < 8; i += 1) {
+        const angle = (i / 8) * Math.PI * 2 + 0.2;
+        ctx.beginPath();
+        ctx.arc(Math.cos(angle) * field.r * 0.72, Math.sin(angle) * field.r * 0.72, 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.restore();
     }
   }
