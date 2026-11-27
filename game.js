@@ -4826,8 +4826,8 @@ const WEAPON_CODEX_TEXT = {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const innerRadius = rect.width * 0.19;
-    const middleRadius = rect.width * 0.285;
     const maxDistance = rect.width * 0.38;
+    const runRadius = maxDistance * 0.99;
     let dx = event.clientX - centerX;
     let dy = event.clientY - centerY;
     const distance = Math.hypot(dx, dy);
@@ -4842,11 +4842,11 @@ const WEAPON_CODEX_TEXT = {
     state.input.stickX = maxDistance > 0 ? dx / maxDistance : 0;
     state.input.stickY = maxDistance > 0 ? dy / maxDistance : 0;
     state.input.stickMagnitude = magnitude;
-    state.input.stickRun = distance > middleRadius;
+    state.input.stickRun = distance >= runRadius;
     state.input.stickActive = magnitude > 0.12;
     joystick.classList.toggle('zone-inner', distance > 0 && distance <= innerRadius);
-    joystick.classList.toggle('zone-middle', distance > innerRadius && distance <= middleRadius);
-    joystick.classList.toggle('zone-outer', distance > middleRadius);
+    joystick.classList.toggle('zone-middle', distance > innerRadius && distance < runRadius);
+    joystick.classList.toggle('zone-outer', distance >= runRadius);
     if (ui.joystickKnob) {
       ui.joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     }

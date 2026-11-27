@@ -2439,8 +2439,8 @@ body {
 }
 
 .joystick-zone-middle {
-  width: 57%;
-  height: 57%;
+  width: 75.2%;
+  height: 75.2%;
   border: 1px solid rgba(123, 213, 255, 0.34);
   background: rgba(123, 213, 255, 0.055);
 }
