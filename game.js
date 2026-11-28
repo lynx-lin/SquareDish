@@ -11623,6 +11623,18 @@ const WEAPON_CODEX_TEXT = {
     if (!weapon.frostCharging) return;
     weapon.frostChargeTimer += dt;
     weapon.frostNuclei = frostNucleiFromTimer(weapon.frostChargeTimer, weapon.level);
+    // 菜单 AI 没有按键松开事件；演示中蓄力 3 秒后自动发射。
+    // 正式游玩时 menuDemo 为 null，不会触发这段逻辑。
+    if (menuDemo && weapon.frostChargeTimer >= 3) {
+      const player = state.player;
+      if (player) {
+        const index = player.weapons.indexOf(weapon);
+        if (index >= 0 && player.heldWeaponIndex === index) {
+          player.heldWeaponIndex = -1;
+        }
+      }
+      releaseFrostCannon(weapon);
+    }
   }
 
   function applyFrostFreeze(enemy) {
