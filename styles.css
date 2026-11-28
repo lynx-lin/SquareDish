@@ -2596,7 +2596,7 @@ body {
   bottom: calc(66px + env(safe-area-inset-bottom, 0px));
   z-index: 5;
   width: auto;
-  max-width: none;
+  max-width: calc(100vw - 24px);
   transform: none;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -2616,9 +2616,12 @@ body {
 }
 
 #hud.touch-mode .relic-chip {
+  max-width: 100%;
   padding: 5px 8px;
   font-size: 9px;
   flex: 0 0 auto;
+  white-space: normal;
+  text-align: center;
 }
 
 .touch-side-picker {

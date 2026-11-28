@@ -438,7 +438,8 @@
   const COMMUNITY_RELIC_IDS = [
     'falseSerpent', 'calmNightLight', 'ritualCandle', 'wishingStar',
     'spinachCan', 'focusCrown', 'slimeCandy', 'acidArmor',
-    'zenShield', 'frostSuppression'
+    'zenShield', 'frostSuppression', 'acceptanceTest',
+    'falseAdvertising', 'bulletScreen'
   ];
   const COMMUNITY_RELIC_PRICE = 160;
   const COMMUNITY_ITEM_IDS = [
@@ -1419,6 +1420,24 @@ const WEAPON_CODEX_TEXT = {
       name: '冰寒压制',
       hp: 4,
       desc: '+4HP；所有受到伤害的敌方都会附加/刷新冻伤：每 2 秒受到 2 点冰系持续伤害，持续 3 秒。'
+    },
+    {
+      id: 'acceptanceTest',
+      name: '验收标准',
+      hp: 4,
+      desc: '+4HP；每 30 秒验收一次，5 米内没有敌方时获得 1 层“清场完成”；游戏结束时按层数获得等量社区货币。'
+    },
+    {
+      id: 'falseAdvertising',
+      name: '虚假宣传',
+      hp: 4,
+      desc: '+4HP；你的所有武器伤害数字显示 ×2，但实际伤害没有任何变化。'
+    },
+    {
+      id: 'bulletScreen',
+      name: '弹幕开启',
+      hp: 4,
+      desc: '+4HP；会感受到弹幕的冲击：标记最高血量敌人、受伤/满耐力/击杀时飘出阴阳弹幕，BOSS 前 10 秒刷屏“前方高能”。'
     }
   ];
 // 未解锁时介绍圣物来源
@@ -1470,7 +1489,63 @@ const WEAPON_CODEX_TEXT = {
     slimeCandy: '社区商店购买（160 社区货币）',
     acidArmor: '社区商店购买（160 社区货币）',
     zenShield: '社区商店购买（160 社区货币）',
-    frostSuppression: '社区商店购买（160 社区货币）'
+    frostSuppression: '社区商店购买（160 社区货币）',
+    acceptanceTest: '社区商店购买（160 社区货币）',
+    falseAdvertising: '社区商店购买（160 社区货币）',
+    bulletScreen: '社区商店购买（160 社区货币）'
+  };
+  const DANMAKU_LINES = {
+    damage: [
+      '这操作诗人', '拳头硬了', '这也能吃到？', '走位是选修课吗？',
+      '血条先下班了', '建议把受击音效换成掌声', '怪都没用力，你怎么躺了',
+      '别慌，慌也没用', '这波不亏，血条亏了', '操作很稳，稳在原地挨打'
+    ],
+    staminaFull: [
+      '耐力条存着过年？', '体力满了，脚是租的？',
+      '跑步键被你封印了？', '满体力站桩，战术大师'
+    ],
+    kill: [
+      '一波带走', '这也能杀？', '对面在挂机吗？',
+      '伤害终于够了', '击杀+1，含金量+0', '别骄傲，是小怪让着你'
+    ],
+    eliteKill: [
+      '精英：我死得很有尊严', '这精英是来送快递的？', '精英怪，精英盒饭'
+    ],
+    bossWarning: [
+      '高能预警，腿别抖', 'BOSS：我来收作业了', '准备交学费', '前方高能，操作低能'
+    ],
+    bossSpawn: [
+      'BOSS来了，作业交一下', '上强度了，别装死', '终于有人来治你了'
+    ],
+    bossKill: [
+      '就这？', 'BOSS：我还会回来的（不会）', '辛苦了，奖励你一个结算'
+    ],
+    lowHp: [
+      '血条已经开始求饶了', '再挨一下就可以重开了',
+      '这血量，建议先深呼吸', '别怕，疼一下就过去了'
+    ],
+    staminaEmpty: [
+      '体力见底，嘴还硬', '跑啊，怎么不跑了？', '没体力了，开始用脸走位？'
+    ],
+    levelUp: [
+      '升级了，操作没升', '等级上去了，脑子没跟上', '升级奖励：继续挨打'
+    ],
+    revive: [
+      '复活了，操作没复活', '这波复活，下波还死', '仰卧起坐冠军'
+    ]
+  };
+  const DANMAKU_COLORS = {
+    damage: '#ff9aa8',
+    staminaFull: '#b8f58a',
+    kill: '#ffe66d',
+    eliteKill: '#ffd479',
+    bossWarning: '#ff9a5c',
+    bossSpawn: '#d4b8ff',
+    bossKill: '#ffe08a',
+    lowHp: '#ff6b7f',
+    staminaEmpty: '#9bc7ff',
+    levelUp: '#8fe4ff',
+    revive: '#c9a7ff'
   };
 // 圣物掉落概率和条件
   const RELIC_DROPS = {
@@ -2395,6 +2470,8 @@ const WEAPON_CODEX_TEXT = {
     noticeColor: '#ffe66d',
     noticeQueue: [],
     runRelicUnlocks: [],
+    runAcceptanceReward: 0,
+    danmaku: [],
     camera: { x: WORLD.w / 2, y: WORLD.h / 2 },
     shake: 0,
     hitFlash: 0,
@@ -2902,6 +2979,13 @@ const WEAPON_CODEX_TEXT = {
   function recordRun(victory) {
     const profile = getActiveProfile();
     if (!profile) return;
+    const acceptanceReward = state.player
+      ? Math.max(0, Math.floor(state.player.acceptanceStacks || 0))
+      : 0;
+    state.runAcceptanceReward = acceptanceReward;
+    if (acceptanceReward > 0) {
+      state.progress.currency += acceptanceReward;
+    }
     const weapons = state.player ? state.player.weapons.map((weapon) => ({
       id: weapon.id,
       name: weapon.name,
@@ -4020,6 +4104,9 @@ const WEAPON_CODEX_TEXT = {
         '#ffe66d',
         3.5
       );
+      if (state.player && state.player.hasBulletScreen) {
+        addDanmaku(pickDanmakuLine('levelUp'), { category: 'levelUp' });
+      }
     }
     return gainedLevels;
   }
@@ -5258,6 +5345,7 @@ const WEAPON_CODEX_TEXT = {
     state.noticeText = '';
     state.noticeQueue = [];
     state.runRelicUnlocks = [];
+    state.runAcceptanceReward = 0;
     state.ruins = [];
     state.enemies = [];
     state.projectiles = [];
@@ -5291,6 +5379,7 @@ const WEAPON_CODEX_TEXT = {
     state.balloons = [];
     state.balloonBursts = [];
     state.damageNumbers = [];
+    state.danmaku = [];
     state.spawnTimer = LEVEL.spawnFirstDelay;
     state.packTimer = 20;
     state.initialBurst = true;
@@ -5394,6 +5483,7 @@ const WEAPON_CODEX_TEXT = {
     state.balloons = [];
     state.balloonBursts = [];
     state.damageNumbers = [];
+    state.danmaku = [];
     state.damageByWeapon = {};
     state.eliteSpawned = freshEliteSpawned();
     state.eliteSeen = [];
@@ -5404,6 +5494,7 @@ const WEAPON_CODEX_TEXT = {
     state.noticeTimer = 0;
     state.noticeQueue = [];
     state.runRelicUnlocks = [];
+    state.runAcceptanceReward = 0;
     resetInput();
     renderMenuLoadout();
     renderMenuRelics();
@@ -5781,9 +5872,12 @@ const WEAPON_CODEX_TEXT = {
         ? `<div class="result-damage-row relic-unlock-row"><span>解锁圣物</span><strong>${relic.name}</strong></div>`
         : '';
     }).join('');
+    const acceptanceRow = state.runAcceptanceReward > 0
+      ? `<div class="result-damage-row acceptance-reward-row"><span>验收标准 · 清场完成×${state.runAcceptanceReward}</span><strong>+${state.runAcceptanceReward} 社区货币</strong></div>`
+      : '';
     ui.resultDamage.innerHTML = weapons.map((weapon) => (
       `<div class="result-damage-row"><span>${weapon.name} Lv${weapon.level}</span><strong>${Math.round(state.damageByWeapon[weapon.id] || 0)}</strong></div>`
-    )).join('') + relicUnlockRows;
+    )).join('') + acceptanceRow + relicUnlockRows;
     state.noticeTimer = 0;
     state.noticeQueue = [];
     setHidden(ui.runToast, true);
@@ -5863,6 +5957,17 @@ const WEAPON_CODEX_TEXT = {
       hasAcidArmor: hasRelic('acidArmor'),
       hasZenShield: hasRelic('zenShield'),
       hasFrostSuppression: hasRelic('frostSuppression'),
+      hasAcceptanceTest: hasRelic('acceptanceTest'),
+      acceptanceStacks: 0,
+      acceptanceTimer: 30,
+      hasFalseAdvertising: hasRelic('falseAdvertising'),
+      hasBulletScreen: hasRelic('bulletScreen'),
+      danmakuDamageCooldown: 0,
+      danmakuWarningTimer: 0,
+      danmakuWarningBurstDone: false,
+      staminaFullAnnounced: false,
+      staminaEmptyAnnounced: false,
+      lowHpDanmakuAnnounced: false,
       isMoving: false,
       contactFlat,
       damageCap,
@@ -6256,6 +6361,27 @@ const WEAPON_CODEX_TEXT = {
     player.darkSpearBuffTimer = Math.max(0, player.darkSpearBuffTimer - dt);
     player.mutationCellBuffTimer = Math.max(0, player.mutationCellBuffTimer - dt);
 
+    if (player.hasAcceptanceTest) {
+      player.acceptanceTimer -= dt;
+      if (player.acceptanceTimer <= 0) {
+        player.acceptanceTimer += 30;
+        const nearbyEnemy = state.enemies.some((enemy) => (
+          !enemy.dead &&
+          dist2(player.x, player.y, enemy.x, enemy.y) <= 25
+        ));
+        if (!nearbyEnemy) {
+          player.acceptanceStacks += 1;
+          addDamageNumber(
+            player.x,
+            player.y - 0.85,
+            `清场完成 ×${player.acceptanceStacks}`,
+            '#ffe66d',
+            1
+          );
+        }
+      }
+    }
+
     if (player.hasWishingStar) {
       player.wishingStarTimer -= dt;
       if (player.wishingStarTimer <= 0) {
@@ -6422,6 +6548,80 @@ const WEAPON_CODEX_TEXT = {
     }
   }
 
+  function spawnBossWarningDanmaku() {
+    const text = Math.random() < 0.7 ? '前方高能' : pickDanmakuLine('bossWarning');
+    addDanmaku(text, { warning: true, category: 'bossWarning' });
+  }
+
+  function triggerDamageDanmaku() {
+    const player = state.player;
+    if (!player || !player.hasBulletScreen || player.danmakuDamageCooldown > 0) return;
+    player.danmakuDamageCooldown = 0.5;
+    addDanmaku(pickDanmakuLine('damage'), { category: 'damage' });
+  }
+
+  function triggerKillDanmaku(enemy) {
+    const player = state.player;
+    if (!player || !player.hasBulletScreen || !enemy) return;
+    if (enemy.isBoss) {
+      addDanmaku(pickDanmakuLine('bossKill'), { category: 'bossKill', size: 20 });
+      return;
+    }
+    if (Math.random() >= 0.1) return;
+    const pool = enemy.isElite
+      ? [...DANMAKU_LINES.kill, ...DANMAKU_LINES.eliteKill]
+      : DANMAKU_LINES.kill;
+    const text = pool[Math.floor(Math.random() * pool.length)];
+    addDanmaku(text, { category: enemy.isElite ? 'eliteKill' : 'kill' });
+  }
+
+  function updateBulletScreenEffects(dt) {
+    const player = state.player;
+    if (!player) return;
+    player.danmakuDamageCooldown = Math.max(0, player.danmakuDamageCooldown - dt);
+    if (!player.hasBulletScreen) return;
+
+    const level = getLevelConfig();
+    const warningStart = level.boss.time - 10;
+    if (!state.bossSpawned && state.time >= warningStart && state.time < level.boss.time) {
+      if (!player.danmakuWarningBurstDone) {
+        player.danmakuWarningBurstDone = true;
+        player.danmakuWarningTimer = 0.6;
+        for (let i = 0; i < 5; i += 1) spawnBossWarningDanmaku();
+      } else {
+        player.danmakuWarningTimer -= dt;
+        if (player.danmakuWarningTimer <= 0) {
+          player.danmakuWarningTimer += 0.6;
+          spawnBossWarningDanmaku();
+          spawnBossWarningDanmaku();
+        }
+      }
+    }
+
+    const fullStamina = player.stamina >= player.staminaMax - 0.001;
+    if (!fullStamina) {
+      player.staminaFullAnnounced = false;
+    } else if (!player.staminaFullAnnounced) {
+      player.staminaFullAnnounced = true;
+      addDanmaku(pickDanmakuLine('staminaFull'), { category: 'staminaFull' });
+    }
+
+    if (player.stamina > player.staminaMax * 0.2) {
+      player.staminaEmptyAnnounced = false;
+    } else if (player.stamina <= 0.001 && !player.staminaEmptyAnnounced) {
+      player.staminaEmptyAnnounced = true;
+      addDanmaku(pickDanmakuLine('staminaEmpty'), { category: 'staminaEmpty' });
+    }
+
+    if (player.hp > player.maxHp * 0.35) {
+      player.lowHpDanmakuAnnounced = false;
+    }
+    if (player.hp > 0 && player.hp <= player.maxHp * 0.25 && !player.lowHpDanmakuAnnounced) {
+      player.lowHpDanmakuAnnounced = true;
+      addDanmaku(pickDanmakuLine('lowHp'), { category: 'lowHp' });
+    }
+  }
+
   function healFriendlyUnits(amount) {
     const player = state.player;
     if (!player) return;
@@ -6556,6 +6756,9 @@ const WEAPON_CODEX_TEXT = {
       addDamageNumber(player.x, player.y - 0.8, '缠绕球 生效', '#c9a6ff');
     }
     player.goldenShellStacks = 0;
+    if (player.hasBulletScreen) {
+      addDanmaku(pickDanmakuLine('revive'), { category: 'revive' });
+    }
   }
 
   function tryFruitBag(projectedHp = state.player ? state.player.hp : 0) {
@@ -6702,6 +6905,7 @@ const WEAPON_CODEX_TEXT = {
     state.shake = Math.max(state.shake, 0.12);
     if (window.GameAudio) GameAudio.sfx('hurt');
     addDamageNumber(player.x, player.y - 0.65, formatNumber(damage), '#ff8398');
+    triggerDamageDanmaku();
 
     if (player.gauzeLayers > 0) {
       player.gauzeLayers -= 1;
@@ -12098,6 +12302,13 @@ const WEAPON_CODEX_TEXT = {
       });
     }
 
+    if (enemy.isBoss && state.player && state.player.hasBulletScreen) {
+      addDanmaku(pickDanmakuLine('bossSpawn'), {
+        category: 'bossSpawn',
+        size: 20
+      });
+    }
+
     if (type.segments > 1 && !wormInfo) {
       const spacing = type.totalLength / (type.segments - 1);
       enemy.wormSpacing = spacing;
@@ -13471,7 +13682,13 @@ const WEAPON_CODEX_TEXT = {
           : isTrue
             ? '#e5f9ff'
             : '#f2f7ff';
-    addDamageNumber(enemy.x, enemy.y - 0.5, formatNumber(damage), color);
+    const weaponDisplay = Boolean(
+      player &&
+      player.hasFalseAdvertising &&
+      sourceId &&
+      player.weapons.some((weapon) => weapon.id === sourceId)
+    );
+    addDamageNumber(enemy.x, enemy.y - 0.5, formatNumber(weaponDisplay ? damage * 2 : damage), color);
 
     if (enemy.extremeHealAllies) {
       for (const ally of state.enemies) {
@@ -13512,6 +13729,7 @@ const WEAPON_CODEX_TEXT = {
     enemy.dead = true;
     state.kills += 1;
     if (window.GameAudio) GameAudio.sfx(enemy.isBoss ? 'bossDeath' : 'death');
+    triggerKillDanmaku(enemy);
     handleFleshPillarDeath(enemy);
 
     for (const segment of state.enemies) {
@@ -14392,6 +14610,83 @@ const WEAPON_CODEX_TEXT = {
   // 伤害数字与相机
   // ============================================================
 
+  function pickDanmakuLine(category) {
+    const lines = DANMAKU_LINES[category] || DANMAKU_LINES.damage;
+    return lines[Math.floor(Math.random() * lines.length)];
+  }
+
+  function addDanmaku(text, options = {}) {
+    if (!text) return;
+    const width = Math.max(320, ui.width || window.innerWidth || 1280);
+    const height = Math.max(240, ui.height || window.innerHeight || 720);
+    const top = height * 0.2;
+    const span = height * 0.48;
+    const laneCount = Math.max(3, Math.floor(span / 38));
+    const lane = options.lane === undefined
+      ? state.danmaku.length % laneCount
+      : clamp(options.lane, 0, laneCount - 1);
+    const warning = Boolean(options.warning);
+    const size = options.size || (warning ? 22 : 16);
+    const life = 6.8;
+    if (state.danmaku.length >= 64) state.danmaku.shift();
+    state.danmaku.push({
+      text,
+      x: width + 30 + Math.random() * 90,
+      y: top + (lane + 0.5) * (span / laneCount),
+      vx: -(width + 320) / 6.8,
+      life,
+      maxLife: life,
+      color: options.color || DANMAKU_COLORS[options.category] || '#e8f0ff',
+      size,
+      warning
+    });
+  }
+
+  function updateDanmaku(dt) {
+    const width = Math.max(320, ui.width || window.innerWidth || 1280);
+    for (const item of state.danmaku) {
+      item.x += item.vx * dt;
+      item.life -= dt;
+    }
+    state.danmaku = state.danmaku.filter((item) => item.life > 0 && item.x > -width * 1.4);
+  }
+
+  function drawDanmaku(ctx) {
+    if (state.danmaku.length === 0) return;
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (const item of state.danmaku) {
+      const alpha = clamp(item.life / 0.8, 0, 1);
+      ctx.globalAlpha = alpha;
+      ctx.font = `700 ${item.size}px "Microsoft YaHei", "Segoe UI", sans-serif`;
+      ctx.lineWidth = item.warning ? 4 : 3;
+      ctx.strokeStyle = 'rgba(4, 8, 16, 0.85)';
+      ctx.strokeText(item.text, item.x, item.y);
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.text, item.x, item.y);
+    }
+    ctx.restore();
+  }
+
+  function drawBulletScreenTargetMarker(ctx) {
+    const player = state.player;
+    if (!player || !player.hasBulletScreen) return;
+    const target = highestHpEnemyWithin(player.x, player.y, Infinity);
+    if (!target) return;
+    const bob = Math.sin(performance.now() / 160) * 0.05;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '700 0.46px "Microsoft YaHei", "Segoe UI", sans-serif';
+    ctx.lineWidth = 0.09;
+    ctx.strokeStyle = 'rgba(15, 12, 4, 0.9)';
+    ctx.strokeText('打这个↓', target.x, target.y - target.r - 0.72 + bob);
+    ctx.fillStyle = '#ffe66d';
+    ctx.fillText('打这个↓', target.x, target.y - target.r - 0.72 + bob);
+    ctx.restore();
+  }
+
   function addDamageNumber(x, y, text, color, life = 0.6) {
     if (state.damageNumbers.length > 70) state.damageNumbers.shift();
     state.damageNumbers.push({
@@ -14488,7 +14783,9 @@ const WEAPON_CODEX_TEXT = {
     updatePlayerProjectiles(dt);
     updateBombs(dt);
     if (window.GameAudio) GameAudio.setBombMusic(state.bombs, state.player);
+    updateBulletScreenEffects(dt);
     updateDamageNumbers(dt);
+    updateDanmaku(dt);
     updateEffects(dt);
     updateCamera();
 
@@ -15244,6 +15541,15 @@ const WEAPON_CODEX_TEXT = {
       } else if (id === 'frostSuppression') {
         chip.textContent = '冰寒压制 冻伤';
         chip.className = 'relic-chip ready';
+      } else if (id === 'acceptanceTest') {
+        chip.textContent = `验收 ${player.acceptanceStacks}层 · ${Math.ceil(player.acceptanceTimer)}s`;
+        chip.className = 'relic-chip cooling';
+      } else if (id === 'falseAdvertising') {
+        chip.textContent = '虚假宣传 显示×2';
+        chip.className = 'relic-chip ready';
+      } else if (id === 'bulletScreen') {
+        chip.textContent = '弹幕开启';
+        chip.className = 'relic-chip ready';
       }
     });
   }
@@ -15319,6 +15625,7 @@ const WEAPON_CODEX_TEXT = {
     drawBombs(ctx);
     drawCart(ctx);
     drawEnemies(ctx);
+    drawBulletScreenTargetMarker(ctx);
     drawForestRoots(ctx);
     drawScavengerMonkeys(ctx);
     drawFocusGauntletPunches(ctx);
@@ -15374,6 +15681,8 @@ const WEAPON_CODEX_TEXT = {
       ctx.fillStyle = `rgba(255, 255, 255, ${(brightness - 1) * 0.34})`;
       ctx.fillRect(0, 0, width, height);
     }
+
+    drawDanmaku(ctx);
   }
 
   function backgroundHash(x, y) {
