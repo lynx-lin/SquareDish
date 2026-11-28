@@ -1431,7 +1431,7 @@ const WEAPON_CODEX_TEXT = {
       id: 'falseAdvertising',
       name: '虚假宣传',
       hp: 4,
-      desc: '+4HP；你的所有武器伤害数字显示 ×2，但实际伤害没有任何变化。'
+      desc: '+4HP；仅第一把武器的伤害数值 ×2，包括游戏内、存档记录与结算的数值；实际战斗伤害不变。'
     },
     {
       id: 'bulletScreen',
@@ -1498,7 +1498,8 @@ const WEAPON_CODEX_TEXT = {
     damage: [
       '这操作诗人', '拳头硬了', '这也能吃到？', '走位是选修课吗？',
       '血条先下班了', '建议把受击音效换成掌声', '怪都没用力，你怎么躺了',
-      '别慌，慌也没用', '这波不亏，血条亏了', '操作很稳，稳在原地挨打'
+      '别慌，慌也没用', '这波不亏，血条亏了', '操作很稳，稳在原地挨打',
+      '早提醒主播了就不听啊'
     ],
     staminaFull: [
       '耐力条存着过年？', '体力满了，脚是租的？',
@@ -1506,13 +1507,16 @@ const WEAPON_CODEX_TEXT = {
     ],
     kill: [
       '一波带走', '这也能杀？', '对面在挂机吗？',
-      '伤害终于够了', '击杀+1，含金量+0', '别骄傲，是小怪让着你'
+      '伤害终于够了', '击杀+1，含金量+0', '别骄傲，是小怪让着你',
+      '不怎么滴啊', '这是什么游戏？', '直播间有活人吗？', '有点无敌',
+      '来点厉害的', '这配装竟然有伤害？', '听我的，直接冲', '我上我也行',
+      '主播你麦没开', '主播怎么不看弹幕？', '坐等翻车'
     ],
     eliteKill: [
       '精英：我死得很有尊严', '这精英是来送快递的？', '精英怪，精英盒饭'
     ],
     bossWarning: [
-      '高能预警，腿别抖', 'BOSS：我来收作业了', '准备交学费', '前方高能，操作低能'
+      '高能预警', 'BOSS：我来收作业了', '准备交学费', '前方高能，操作低能'
     ],
     bossSpawn: [
       'BOSS来了，作业交一下', '上强度了，别装死', '终于有人来治你了'
@@ -1522,7 +1526,8 @@ const WEAPON_CODEX_TEXT = {
     ],
     lowHp: [
       '血条已经开始求饶了', '再挨一下就可以重开了',
-      '这血量，建议先深呼吸', '别怕，疼一下就过去了'
+      '这血量，建议先深呼吸', '别怕，疼一下就过去了',
+      '听劝，别头铁', '战术压血条', '对面强不是主播菜'
     ],
     staminaEmpty: [
       '体力见底，嘴还硬', '跑啊，怎么不跑了？', '没体力了，开始用脸走位？'
@@ -1531,7 +1536,8 @@ const WEAPON_CODEX_TEXT = {
       '升级了，操作没升', '等级上去了，脑子没跟上', '升级奖励：继续挨打'
     ],
     revive: [
-      '复活了，操作没复活', '这波复活，下波还死', '仰卧起坐冠军'
+      '复活了，操作没复活', '这波复活，下波还死', '仰卧起坐冠军',
+      '这游戏还能复活？'
     ]
   };
   const DANMAKU_COLORS = {
@@ -13627,6 +13633,14 @@ const WEAPON_CODEX_TEXT = {
       return;
     }
 
+    const isFalseAdvertisedWeapon = Boolean(
+      player &&
+      player.hasFalseAdvertising &&
+      player.weapons[0] &&
+      sourceId &&
+      player.weapons[0].id === sourceId
+    );
+    const recordedDamage = isFalseAdvertisedWeapon ? damage * 2 : damage;
     const hpBefore = enemy.hp;
     enemy.hp -= damage;
     enemy.lastDamageSource = sourceId || enemy.lastDamageSource;
@@ -13636,9 +13650,9 @@ const WEAPON_CODEX_TEXT = {
     enemy.lastHitWasFullHpLethal = hpBefore >= enemy.maxHp - 0.001 && damage >= hpBefore;
     enemy.totalDamageTaken = (enemy.totalDamageTaken || 0) + damage;
     enemy.everDamaged = true;
-    state.damageDealt += damage;
+    state.damageDealt += recordedDamage;
     if (sourceId) {
-      state.damageByWeapon[sourceId] = (state.damageByWeapon[sourceId] || 0) + damage;
+      state.damageByWeapon[sourceId] = (state.damageByWeapon[sourceId] || 0) + recordedDamage;
     }
     if (window.GameAudio) GameAudio.weaponHit(sourceId, effectiveType, options);
     enemy.hitFlash = 0.08;
@@ -13694,13 +13708,7 @@ const WEAPON_CODEX_TEXT = {
           : isTrue
             ? '#e5f9ff'
             : '#f2f7ff';
-    const weaponDisplay = Boolean(
-      player &&
-      player.hasFalseAdvertising &&
-      sourceId &&
-      player.weapons.some((weapon) => weapon.id === sourceId)
-    );
-    addDamageNumber(enemy.x, enemy.y - 0.5, formatNumber(weaponDisplay ? damage * 2 : damage), color);
+    addDamageNumber(enemy.x, enemy.y - 0.5, formatNumber(recordedDamage), color);
 
     if (enemy.extremeHealAllies) {
       for (const ally of state.enemies) {
@@ -15557,7 +15565,7 @@ const WEAPON_CODEX_TEXT = {
         chip.textContent = `验收 ${player.acceptanceStacks}层 · ${Math.ceil(player.acceptanceTimer)}s`;
         chip.className = 'relic-chip cooling';
       } else if (id === 'falseAdvertising') {
-        chip.textContent = '虚假宣传 显示×2';
+        chip.textContent = '虚假宣传 一号武器×2';
         chip.className = 'relic-chip ready';
       } else if (id === 'bulletScreen') {
         chip.textContent = '弹幕开启';
