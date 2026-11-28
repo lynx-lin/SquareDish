@@ -435,6 +435,12 @@
     'corruptedMushroom', 'oscillationSafe', 'waterShuriken'
   ];
   const COMMUNITY_WEAPON_PRICE = 160;
+  const COMMUNITY_RELIC_IDS = [
+    'falseSerpent', 'calmNightLight', 'ritualCandle', 'wishingStar',
+    'spinachCan', 'focusCrown', 'slimeCandy', 'acidArmor',
+    'zenShield', 'frostSuppression'
+  ];
+  const COMMUNITY_RELIC_PRICE = 160;
   const COMMUNITY_ITEM_IDS = [
     'omniscience', 'bottledSoul',
     'blueprintFleshPillar', 'blueprintUndertaker', 'blueprintChimera',
@@ -1353,6 +1359,66 @@ const WEAPON_CODEX_TEXT = {
       name: '丰饶原核',
       hp: 8,
       desc: '+8HP；每损失 1 生命值积攒 0.2 点丰饶祝福，上限 20 点；生命值低于 15 时，立刻消耗所有丰饶祝福恢复等量 HP。'
+    },
+    {
+      id: 'falseSerpent',
+      name: '虚与委蛇',
+      hp: 4,
+      desc: '+4HP；耐力值上限、恢复速率、消耗速率翻倍。'
+    },
+    {
+      id: 'calmNightLight',
+      name: '宁静夜灯',
+      hp: 4,
+      desc: '+4HP；敌方刷新间隔 +6%。'
+    },
+    {
+      id: 'ritualCandle',
+      name: '仪式蜡烛',
+      hp: 4,
+      desc: '+4HP；BOSS 诞生时损失 12% 最大生命值。'
+    },
+    {
+      id: 'wishingStar',
+      name: '祈愿星星',
+      hp: 4,
+      desc: '+4HP；每隔 120 秒，生命值恢复到最大值。'
+    },
+    {
+      id: 'spinachCan',
+      name: '菠菜罐头',
+      hp: 4,
+      desc: '+4HP；每隔 120 秒，耐力值恢复到最大值。'
+    },
+    {
+      id: 'focusCrown',
+      name: '专一王冠',
+      hp: 4,
+      desc: '+4HP；每个少携带的圣物使伤害 ×1.1，最多 ×1.21。'
+    },
+    {
+      id: 'slimeCandy',
+      name: '史莱姆糖',
+      hp: 4,
+      desc: '+4HP；入场时把当前难度的史莱姆填充至当前难度的刷怪上限。'
+    },
+    {
+      id: 'acidArmor',
+      name: '酸胶盔甲',
+      hp: 4,
+      desc: '+4HP；移动速度 -20%；碰到你的敌人移动速度 -20%，并且易伤 20%，持续 5 秒。'
+    },
+    {
+      id: 'zenShield',
+      name: '禅心护盾',
+      hp: 4,
+      desc: '+4HP；当你不动时，你受到的伤害降低 50%。'
+    },
+    {
+      id: 'frostSuppression',
+      name: '冰寒压制',
+      hp: 4,
+      desc: '+4HP；所有受到伤害的敌方都会附加/刷新冻伤：每 2 秒受到 2 点冰系持续伤害，持续 3 秒。'
     }
   ];
 // 未解锁时介绍圣物来源
@@ -1394,7 +1460,17 @@ const WEAPON_CODEX_TEXT = {
     gauzeShield: '制造台合成（需纱盾蓝图与材料）',
     wondrousVineRock: '制造台合成（需邪恶蔓岩蓝图与材料）',
     witheredNucleus: '制造台合成（需枯萎原核蓝图与材料）',
-    fertileNucleus: '制造台合成（需丰饶原核蓝图与材料）'
+    fertileNucleus: '制造台合成（需丰饶原核蓝图与材料）',
+    falseSerpent: '社区商店购买（160 社区货币）',
+    calmNightLight: '社区商店购买（160 社区货币）',
+    ritualCandle: '社区商店购买（160 社区货币）',
+    wishingStar: '社区商店购买（160 社区货币）',
+    spinachCan: '社区商店购买（160 社区货币）',
+    focusCrown: '社区商店购买（160 社区货币）',
+    slimeCandy: '社区商店购买（160 社区货币）',
+    acidArmor: '社区商店购买（160 社区货币）',
+    zenShield: '社区商店购买（160 社区货币）',
+    frostSuppression: '社区商店购买（160 社区货币）'
   };
 // 圣物掉落概率和条件
   const RELIC_DROPS = {
@@ -3386,6 +3462,24 @@ const WEAPON_CODEX_TEXT = {
       ui.shopList.querySelectorAll('[data-buy-item]').forEach((button) => {
         button.addEventListener('click', () => purchaseCommunityItem(button.dataset.buyItem));
       });
+    } else if (shopTab === 'relics') {
+      ui.shopList.innerHTML = COMMUNITY_RELIC_IDS.map((id) => {
+        const relic = getRelicById(id);
+        if (!relic) return '';
+        const owned = isRelicUnlocked(id);
+        return `
+          <div class="shop-item">
+            <strong>${relic.name}</strong>
+            ${owned
+              ? '<span class="owned">已拥有</span>'
+              : `<button type="button" data-buy-relic="${id}" ${state.progress.currency < COMMUNITY_RELIC_PRICE ? 'disabled' : ''}>${COMMUNITY_RELIC_PRICE} 币</button>`}
+            <small>${relic.desc}</small>
+          </div>
+        `;
+      }).join('');
+      ui.shopList.querySelectorAll('[data-buy-relic]').forEach((button) => {
+        button.addEventListener('click', () => purchaseCommunityRelic(button.dataset.buyRelic));
+      });
     } else {
       ui.shopList.innerHTML = COMMUNITY_WEAPON_IDS.map((id) => {
         const weapon = getWeaponById(id);
@@ -3501,6 +3595,22 @@ const WEAPON_CODEX_TEXT = {
     saveActiveSlot();
     renderInventory();
     renderWeaponSelect();
+  }
+
+  function purchaseCommunityRelic(id) {
+    if (!COMMUNITY_RELIC_IDS.includes(id) || isRelicUnlocked(id)) return;
+    if (state.progress.currency < COMMUNITY_RELIC_PRICE) return;
+    state.progress.currency -= COMMUNITY_RELIC_PRICE;
+    if (!state.progress.unlockedRelics.includes(id)) {
+      state.progress.unlockedRelics.push(id);
+    }
+    if (state.progress.unlockedRelics.length <= 3) {
+      state.relicIds = filterConflictingRelics(state.progress.unlockedRelics).slice(0, 3);
+    }
+    saveActiveSlot();
+    renderInventory();
+    renderMenuRelics();
+    if (ui.shopHint) ui.shopHint.textContent = '已解锁该圣物；请在主菜单“圣物”区携带。';
   }
 
   function purchaseCommunityItem(id) {
@@ -4720,7 +4830,8 @@ const WEAPON_CODEX_TEXT = {
     $('crafting-close-x').addEventListener('click', hideCrafting);
     document.querySelectorAll('.shop-tab').forEach((button) => {
       button.addEventListener('click', () => {
-        shopTab = button.dataset.shopTab === 'items' ? 'items' : 'weapons';
+        const tab = button.dataset.shopTab;
+        shopTab = ['weapons', 'relics', 'items'].includes(tab) ? tab : 'weapons';
         if (ui.shopHint) ui.shopHint.textContent = '';
         renderInventory();
       });
@@ -5194,6 +5305,7 @@ const WEAPON_CODEX_TEXT = {
     state.player = createPlayer();
     nextEntityId = 1;
     state.ruins = generateRuins();
+    fillSlimeCandySpawnCap();
     state.camera.x = state.player.x;
     state.camera.y = state.player.y;
     buildWeaponCards();
@@ -5693,6 +5805,8 @@ const WEAPON_CODEX_TEXT = {
       relic.damageCap === undefined ? best : Math.min(best, relic.damageCap)
     ), Infinity);
     const scarf = hasRelic('scarf');
+    const hasFalseSerpent = hasRelic('falseSerpent');
+    const staminaScale = hasFalseSerpent ? 2 : 1;
     const conversionRelic = hasRelic('iceCrystal')
       ? 'ice'
       : hasRelic('inkBall')
@@ -5701,10 +5815,13 @@ const WEAPON_CODEX_TEXT = {
 
     const maxHp = PLAYER.baseHp + bonusHp;
     const selectedWeapons = getSelectedWeapons();
-    const moveSpeedMultiplier = 1 + selectedWeapons.reduce(
+    const moveSpeedMultiplier = (1 + selectedWeapons.reduce(
       (sum, weapon) => sum + (weapon.passiveMoveSpeed || 0),
       0
-    );
+    )) * (hasRelic('acidArmor') ? 0.8 : 1);
+    const focusCrownMultiplier = hasRelic('focusCrown')
+      ? Math.min(1.21, 1.1 ** Math.max(0, 3 - selectedRelics.length))
+      : 1;
     const hasRabbit = selectedWeapons.some((weapon) => weapon.id === 'rabbit');
     const hasBareHand = selectedWeapons.some((weapon) => weapon.id === 'bareHand');
     const bareHandLevel = getWeaponLevel('bareHand');
@@ -5717,7 +5834,8 @@ const WEAPON_CODEX_TEXT = {
       maxHp,
       lastHp: maxHp,
       bloodGloryCooldown: 0,
-      stamina: PLAYER.staminaMax,
+      stamina: PLAYER.staminaMax * staminaScale,
+      staminaMax: PLAYER.staminaMax * staminaScale,
       staminaDelay: 0,
       invuln: 0,
       slowTimer: 0,
@@ -5730,7 +5848,22 @@ const WEAPON_CODEX_TEXT = {
       poisonTimer: 0,
       regen: PLAYER.baseRegen + bonusRegen,
       runSpeed: PLAYER.runSpeed + (scarf ? 0.4 : 0),
-      staminaRegen: PLAYER.staminaRegen + (scarf ? 2 : 0),
+      staminaRegen: (PLAYER.staminaRegen + (scarf ? 2 : 0)) * staminaScale,
+      staminaDrain: PLAYER.staminaDrain * staminaScale,
+      hasFalseSerpent,
+      hasCalmNightLight: hasRelic('calmNightLight'),
+      hasRitualCandle: hasRelic('ritualCandle'),
+      hasWishingStar: hasRelic('wishingStar'),
+      wishingStarTimer: 120,
+      hasSpinachCan: hasRelic('spinachCan'),
+      spinachTimer: 120,
+      hasFocusCrown: hasRelic('focusCrown'),
+      focusCrownMultiplier,
+      hasSlimeCandy: hasRelic('slimeCandy'),
+      hasAcidArmor: hasRelic('acidArmor'),
+      hasZenShield: hasRelic('zenShield'),
+      hasFrostSuppression: hasRelic('frostSuppression'),
+      isMoving: false,
       contactFlat,
       damageCap,
       moveSpeedMultiplier,
@@ -5960,6 +6093,7 @@ const WEAPON_CODEX_TEXT = {
       moveY = -moveY;
     }
     const moving = stickActive ? moveIntensity > 0.12 : moveX !== 0 || moveY !== 0;
+    player.isMoving = moving;
 
     if (moving) {
       const length = Math.hypot(moveX, moveY) || 1;
@@ -6036,12 +6170,12 @@ const WEAPON_CODEX_TEXT = {
       : 0;
 
     if (running) {
-      player.stamina = Math.max(0, player.stamina - PLAYER.staminaDrain * dt);
+      player.stamina = Math.max(0, player.stamina - player.staminaDrain * dt);
       player.staminaDelay = PLAYER.staminaDelay;
     } else {
       player.staminaDelay = Math.max(0, player.staminaDelay - dt);
       if (player.staminaDelay === 0) {
-        player.stamina = Math.min(PLAYER.staminaMax, player.stamina + player.staminaRegen * dt);
+        player.stamina = Math.min(player.staminaMax, player.stamina + player.staminaRegen * dt);
       }
     }
 
@@ -6121,6 +6255,37 @@ const WEAPON_CODEX_TEXT = {
     player.soulWoodArmorTimer = Math.max(0, player.soulWoodArmorTimer - dt);
     player.darkSpearBuffTimer = Math.max(0, player.darkSpearBuffTimer - dt);
     player.mutationCellBuffTimer = Math.max(0, player.mutationCellBuffTimer - dt);
+
+    if (player.hasWishingStar) {
+      player.wishingStarTimer -= dt;
+      if (player.wishingStarTimer <= 0) {
+        player.wishingStarTimer = 120;
+        if (player.hp > 0 && player.hp < player.maxHp) {
+          player.hp = player.maxHp;
+          addDamageNumber(player.x, player.y - 0.85, '祈愿星星 · 生命回满', '#ffe89a');
+          addEffect({
+            kind: 'ring',
+            x: player.x,
+            y: player.y,
+            r: 1.1,
+            life: 0.45,
+            maxLife: 0.45,
+            color: '#ffe89a'
+          });
+        }
+      }
+    }
+
+    if (player.hasSpinachCan) {
+      player.spinachTimer -= dt;
+      if (player.spinachTimer <= 0) {
+        player.spinachTimer = 120;
+        if (player.stamina < player.staminaMax) {
+          player.stamina = player.staminaMax;
+          addDamageNumber(player.x, player.y - 0.85, '菠菜罐头 · 耐力回满', '#b8f58a');
+        }
+      }
+    }
 
     if (player.hasGauzeShield) {
       player.gauzeTimer -= dt;
@@ -6427,6 +6592,9 @@ const WEAPON_CODEX_TEXT = {
     }
     if (kind === 'contact') {
       damage = Math.max(0, damage - player.contactFlat);
+    }
+    if (player.hasZenShield && !player.isMoving) {
+      damage *= 0.5;
     }
     if (player.gauzeLayers > 0) {
       damage *= 1 - player.gauzeLayers * 0.25;
@@ -6825,7 +6993,7 @@ const WEAPON_CODEX_TEXT = {
         break;
       case 'banana':
         if (weapon.activeCooldown <= 0) {
-          state.player.stamina = Math.min(PLAYER.staminaMax, state.player.stamina + 50);
+          state.player.stamina = Math.min(state.player.staminaMax, state.player.stamina + 50);
           weapon.activeCooldown = 15;
         }
         break;
@@ -11837,6 +12005,8 @@ const WEAPON_CODEX_TEXT = {
       durianPoison: null,
       durianVulnerable: false,
       durianInsideAura: false,
+      acidVulnerableTimer: 0,
+      frostbite: null,
       iceLastX: undefined,
       iceLastY: undefined,
       iceMoveAccum: 0,
@@ -11911,6 +12081,22 @@ const WEAPON_CODEX_TEXT = {
     }
 
     state.enemies.push(enemy);
+
+    if (enemy.isBoss && state.player && state.player.hasRitualCandle) {
+      const loss = enemy.maxHp * 0.12;
+      enemy.hp = Math.max(1, enemy.hp - loss);
+      enemy.hitFlash = 0.08;
+      addDamageNumber(enemy.x, enemy.y - 0.8, `仪式蜡烛 -${Math.round(loss)}`, '#ffb36b');
+      addEffect({
+        kind: 'ring',
+        x: enemy.x,
+        y: enemy.y,
+        r: 1.4,
+        life: 0.5,
+        maxLife: 0.5,
+        color: '#ffb36b'
+      });
+    }
 
     if (type.segments > 1 && !wormInfo) {
       const spacing = type.totalLength / (type.segments - 1);
@@ -12024,6 +12210,18 @@ const WEAPON_CODEX_TEXT = {
     }
   }
 
+  function fillSlimeCandySpawnCap() {
+    const player = state.player;
+    if (!player || !player.hasSlimeCandy) return;
+    const cap = getSpawnCap();
+    let guard = cap + 1;
+    while (state.enemies.length < cap && guard > 0) {
+      guard -= 1;
+      if (!spawnEnemy('slime')) break;
+    }
+    if (state.enemies.length >= cap) state.initialBurst = false;
+  }
+
   function updateSpawner(dt) {
     const level = getLevelConfig();
     if (!state.bossSpawned && state.time >= level.boss.time) {
@@ -12077,11 +12275,12 @@ const WEAPON_CODEX_TEXT = {
     }
 
     const progress = clamp(state.time / LEVEL.bossTime, 0, 1);
+    const intervalMultiplier = state.player && state.player.hasCalmNightLight ? 1.06 : 1;
     state.spawnTimer = lerp(
       LEVEL.spawnIntervalStart,
       LEVEL.spawnIntervalEnd,
       progress
-    );
+    ) * intervalMultiplier;
   }
 
   function spawnEnemyPack() {
@@ -12604,6 +12803,10 @@ const WEAPON_CODEX_TEXT = {
         if (enemy.slowTimer === 0) enemy.slowFactor = 1;
       }
 
+      if (enemy.acidVulnerableTimer > 0) {
+        enemy.acidVulnerableTimer = Math.max(0, enemy.acidVulnerableTimer - dt);
+      }
+
       if (enemy.poison) {
         enemy.poison.timer -= dt;
         if (enemy.poison.timer <= 0) {
@@ -12645,6 +12848,20 @@ const WEAPON_CODEX_TEXT = {
           enemy.sporeDotTimer += 1;
           damageEnemy(enemy, 2, 'poison', false, 'poisonSacBook', { dot: true });
         }
+      }
+
+      if (enemy.frostbite) {
+        const frostbite = enemy.frostbite;
+        frostbite.duration -= dt;
+        frostbite.timer -= dt;
+        if (frostbite.timer <= 0 && frostbite.duration > 0) {
+          frostbite.timer += 2;
+          damageEnemy(enemy, 2, 'ice', false, 'frostSuppression', {
+            dot: true,
+            frostbiteTick: true
+          });
+        }
+        if (frostbite.duration <= 0) enemy.frostbite = null;
       }
 
       if (enemy.fragileTimer > 0) {
@@ -12746,6 +12963,10 @@ const WEAPON_CODEX_TEXT = {
         + (target.type === 'player' && enemy.contactRadius > 0 ? enemy.contactRadius : enemy.r);
       if (distance <= contactDistance && enemy.contactCd <= 0) {
         let applied = false;
+        if (target.type === 'player' && player.hasAcidArmor) {
+          applyEnemySlow(enemy, 0.8, 5);
+          enemy.acidVulnerableTimer = Math.max(enemy.acidVulnerableTimer || 0, 5);
+        }
         if (target.type === 'bomb') {
           damageBomb(target.ref, enemy.damage);
           applied = true;
@@ -13082,6 +13303,9 @@ const WEAPON_CODEX_TEXT = {
     if (damage > 0 && player && player.darkSpearBuffTimer > 0) {
       damage *= 1.2;
     }
+    if (damage > 0 && player && player.focusCrownMultiplier > 1) {
+      damage *= player.focusCrownMultiplier;
+    }
 
     if (effectiveType === 'poison' && enemy.immunePoison) {
       damage = 0;
@@ -13141,6 +13365,10 @@ const WEAPON_CODEX_TEXT = {
       damage *= 1.12;
     }
 
+    if (damage > 0 && !isTrue && enemy.acidVulnerableTimer > 0) {
+      damage *= 1.2;
+    }
+
     if (damage > 0 && !isTrue && enemy.vulnerable) {
       damage *= 1.25;
       enemy.vulnerable = false;
@@ -13191,6 +13419,21 @@ const WEAPON_CODEX_TEXT = {
     }
     if (window.GameAudio) GameAudio.weaponHit(sourceId, effectiveType, options);
     enemy.hitFlash = 0.08;
+
+    if (
+      player &&
+      player.hasFrostSuppression &&
+      enemy.hp > 0 &&
+      !options.frostbiteTick &&
+      !enemy.immuneIce &&
+      !enemy.immuneDot
+    ) {
+      if (enemy.frostbite) {
+        enemy.frostbite.duration = 3;
+      } else {
+        enemy.frostbite = { duration: 3, timer: 2 };
+      }
+    }
 
     if (enemy.type === 'waterElement' && effectiveType === 'ice') {
       enemy.slowTimer = Math.max(enemy.slowTimer, 2);
@@ -13937,7 +14180,7 @@ const WEAPON_CODEX_TEXT = {
           const hitDistance = projectile.r + enemy.r;
           if (dist2(projectile.x, projectile.y, enemy.x, enemy.y) <= hitDistance * hitDistance) {
             damageEnemy(enemy, projectile.damage, 'physical', false, 'banana');
-            player.stamina = Math.min(PLAYER.staminaMax, player.stamina + 2);
+            player.stamina = Math.min(player.staminaMax, player.stamina + 2);
             projectile.dead = true;
             break;
           }
@@ -14325,7 +14568,7 @@ const WEAPON_CODEX_TEXT = {
 
     ui.hpFill.style.width = `${clamp(player.hp / player.maxHp, 0, 1) * 100}%`;
     ui.hpText.textContent = `${Math.ceil(player.hp)}/${player.maxHp}${player.goldenHp > 0 ? ` +${player.goldenHp}金` : ''}${player.experienceShield > 0 ? ` +${Math.ceil(player.experienceShield)}盾` : ''}`;
-    ui.staminaFill.style.width = `${clamp(player.stamina / PLAYER.staminaMax, 0, 1) * 100}%`;
+    ui.staminaFill.style.width = `${clamp(player.stamina / player.staminaMax, 0, 1) * 100}%`;
     ui.staminaText.textContent = String(Math.round(player.stamina));
     const playerLevel = state.progress.level;
     const playerExp = playerLevel >= MAX_PLAYER_LEVEL ? 0 : state.progress.exp;
@@ -14970,6 +15213,36 @@ const WEAPON_CODEX_TEXT = {
         chip.className = player.fertileBlessing > 0 ? 'relic-chip ready' : 'relic-chip';
       } else if (id === 'witheredNucleus') {
         chip.textContent = '枯萎原核 接触反伤';
+        chip.className = 'relic-chip ready';
+      } else if (id === 'falseSerpent') {
+        chip.textContent = `虚与委蛇 体力${Math.round(player.stamina)}/${player.staminaMax}`;
+        chip.className = 'relic-chip ready';
+      } else if (id === 'calmNightLight') {
+        chip.textContent = '宁静夜灯 间隔+6%';
+        chip.className = 'relic-chip ready';
+      } else if (id === 'ritualCandle') {
+        chip.textContent = '仪式蜡烛 BOSS-12%';
+        chip.className = 'relic-chip';
+      } else if (id === 'wishingStar') {
+        chip.textContent = `祈愿星星 ${Math.ceil(player.wishingStarTimer)}s`;
+        chip.className = 'relic-chip cooling';
+      } else if (id === 'spinachCan') {
+        chip.textContent = `菠菜罐头 ${Math.ceil(player.spinachTimer)}s`;
+        chip.className = 'relic-chip cooling';
+      } else if (id === 'focusCrown') {
+        chip.textContent = `专一王冠 ×${player.focusCrownMultiplier.toFixed(2)}`;
+        chip.className = player.focusCrownMultiplier > 1 ? 'relic-chip ready' : 'relic-chip';
+      } else if (id === 'slimeCandy') {
+        chip.textContent = '史莱姆糖 入场铺满';
+        chip.className = 'relic-chip ready';
+      } else if (id === 'acidArmor') {
+        chip.textContent = '酸胶盔甲 接触易伤';
+        chip.className = 'relic-chip ready';
+      } else if (id === 'zenShield') {
+        chip.textContent = player.isMoving ? '禅心护盾 移动中' : '禅心护盾 静止减伤';
+        chip.className = player.isMoving ? 'relic-chip cooling' : 'relic-chip ready';
+      } else if (id === 'frostSuppression') {
+        chip.textContent = '冰寒压制 冻伤';
         chip.className = 'relic-chip ready';
       }
     });
@@ -17439,6 +17712,30 @@ const WEAPON_CODEX_TEXT = {
           ctx.fillStyle = '#d9f06b';
           ctx.fill();
         }
+      }
+
+      if (enemy.frostbite) {
+        const frostRatio = clamp(enemy.frostbite.duration / 3, 0, 1);
+        ctx.globalAlpha = 0.35 + frostRatio * 0.35;
+        ctx.strokeStyle = '#9be7ff';
+        ctx.lineWidth = 0.04;
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.r + 0.08, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(200, 244, 255, 0.85)';
+        for (let i = 0; i < 3; i += 1) {
+          const angle = (i / 3) * Math.PI * 2 + enemy.id;
+          ctx.beginPath();
+          ctx.arc(
+            Math.cos(angle) * (enemy.r + 0.12),
+            Math.sin(angle) * (enemy.r + 0.12),
+            0.035,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
       }
 
       if (enemy.hitFlash > 0) {

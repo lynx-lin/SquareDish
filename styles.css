@@ -1547,6 +1547,7 @@ kbd {
 
 .shop-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
 }
