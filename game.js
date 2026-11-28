@@ -18352,31 +18352,44 @@ const WEAPON_CODEX_TEXT = {
         ctx.lineWidth = 0.04;
         ctx.stroke();
       } else if (projectile.kind === 'banana') {
-        const points = [
-          { x: 0.175, y: 0 },
-          { x: 0, y: 0.303 },
-          { x: 0, y: -0.303 }
-        ];
-        const centroid = {
-          x: (points[0].x + points[1].x + points[2].x) / 3,
-          y: (points[0].y + points[1].y + points[2].y) / 3
-        };
         ctx.save();
         ctx.translate(projectile.x, projectile.y);
         ctx.rotate(projectile.spin || 0);
-        ctx.translate(-centroid.x, -centroid.y);
-        ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.strokeStyle = '#ffe66d';
-        ctx.lineWidth = 0.08;
         ctx.beginPath();
-        ctx.moveTo(points[1].x, points[1].y);
-        ctx.lineTo(points[0].x, points[0].y);
-        ctx.lineTo(points[2].x, points[2].y);
+        ctx.moveTo(-0.44, 0.12);
+        ctx.bezierCurveTo(-0.26, -0.4, 0.18, -0.45, 0.44, -0.1);
+        ctx.bezierCurveTo(0.18, -0.2, -0.18, -0.16, -0.44, 0.12);
+        ctx.closePath();
+        ctx.fillStyle = '#ffe36a';
+        ctx.fill();
+        ctx.strokeStyle = '#b8862d';
+        ctx.lineWidth = 0.045;
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(255, 255, 220, 0.55)';
-        ctx.lineWidth = 0.0245;
+
+        // 左侧果柄、右侧果蒂、反光和熟斑，让轮廓更像香蕉。
+        ctx.fillStyle = '#6b4417';
+        ctx.beginPath();
+        ctx.ellipse(-0.5, 0.12, 0.09, 0.04, -0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0.44, -0.1, 0.055, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 215, 0.64)';
+        ctx.lineWidth = 0.025;
+        ctx.beginPath();
+        ctx.moveTo(-0.3, -0.03);
+        ctx.quadraticCurveTo(0, -0.33, 0.3, -0.09);
         ctx.stroke();
+
+        ctx.fillStyle = 'rgba(120, 80, 20, 0.3)';
+        ctx.beginPath();
+        ctx.arc(-0.04, -0.22, 0.028, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0.14, -0.25, 0.022, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       } else if (projectile.kind === 'knife') {
         ctx.fillStyle = '#e7f7ff';
